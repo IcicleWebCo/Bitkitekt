@@ -20,9 +20,9 @@ export function PostCard({ post }: PostCardProps) {
         <article className="bg-slate-900/50 backdrop-blur-xl border border-slate-700/50 rounded-2xl shadow-2xl p-6 md:p-10 space-y-6">
 
           <header className="space-y-4 border-b border-slate-700/50 pb-6">
-            <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white leading-tight">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white leading-tight">
               {post.title}
-            </h1>
+            </h2>
 
             <div className="flex flex-wrap items-center gap-3 text-sm">
               {post.primary_topic && (

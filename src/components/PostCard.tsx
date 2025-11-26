@@ -123,7 +123,6 @@ export function PostCard({ post }: PostCardProps) {
                       {post.risk_level && (
                         <div className={`flex items-center gap-1.5 px-3 py-1 rounded-md border text-sm ${riskColors[post.risk_level]}`}> 
                           <AlertTriangle className="w-3.5 h-3.5" />
-                          <span className="text-xs text-slate-400 mr-1">Risk:</span>
                           <span className="font-medium">{post.risk_level}</span>
                         </div>
                       )}

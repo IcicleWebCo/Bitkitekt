@@ -32,6 +32,13 @@ export function PostCard({ post }: PostCardProps) {
                 </div>
               )}
 
+              {post.compatibility_min_version && (
+                <div className="flex items-center gap-2 text-sm">
+                  <span className="text-slate-400">Min Version:</span>
+                  <span className="text-slate-200 font-mono">{post.compatibility_min_version}</span>
+                </div>
+              )}
+
               <div className="flex items-center gap-2 text-slate-400">
                 <Calendar className="w-4 h-4" />
                 <span>Last verified: {new Date(post.last_verified).toLocaleDateString()}</span>
@@ -118,7 +125,7 @@ export function PostCard({ post }: PostCardProps) {
               </div>
             )}
 
-            {(post.performance_impact || post.risk_level || post.compatibility_min_version || post.compatibility_deprecated_in) && (
+            {(post.performance_impact || post.risk_level || post.compatibility_deprecated_in) && (
               <section>
                 <div className="flex flex-wrap items-center gap-4 mb-3">
                   {post.performance_impact && (
@@ -130,20 +137,10 @@ export function PostCard({ post }: PostCardProps) {
                       <span className="font-medium">{post.risk_level}</span>
                     </div>
                   )}
-                  {(post.compatibility_min_version || post.compatibility_deprecated_in) && (
-                    <div className="flex items-center gap-4">
-                      {post.compatibility_min_version && (
-                        <div className="flex items-center gap-2 text-sm">
-                          <span className="text-slate-400">Min Version:</span>
-                          <span className="text-slate-200 font-mono">{post.compatibility_min_version}</span>
-                        </div>
-                      )}
-                      {post.compatibility_deprecated_in && (
-                        <div className="flex items-center gap-2 text-sm">
-                          <span className="text-slate-400">Deprecated In:</span>
-                          <span className="text-orange-400 font-mono">{post.compatibility_deprecated_in}</span>
-                        </div>
-                      )}
+                  {post.compatibility_deprecated_in && (
+                    <div className="flex items-center gap-2 text-sm">
+                      <span className="text-slate-400">Deprecated In:</span>
+                      <span className="text-orange-400 font-mono">{post.compatibility_deprecated_in}</span>
                     </div>
                   )}
                 </div>

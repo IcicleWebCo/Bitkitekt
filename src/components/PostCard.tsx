@@ -99,8 +99,8 @@ export function PostCard({ post }: PostCardProps) {
                         </div>
                       </div>
                     )}
-                    <pre className="p-4 overflow-x-auto">
-                      <code className="text-sm text-cyan-300 font-mono">{snippet.content}</code>
+                    <pre className="p-4 overflow-x-auto text-white">
+                      <code className="text-sm font-mono">{snippet.content}</code>
                     </pre>
                   </div>
                 ))}

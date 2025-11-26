@@ -24,7 +24,7 @@ export function PostCard({ post }: PostCardProps) {
               <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-white leading-tight">
                 {post.title}
               </h2>
-              {post.difficulty_level && (
+              {post.difficulty && (
                 <div className="flex items-center gap-2 text-sm">
                   <span className="text-slate-400">Difficulty:</span>
                   <span className="text-slate-200 font-mono">{post.difficulty_level}</span>

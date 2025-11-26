@@ -99,8 +99,8 @@ export function PostCard({ post }: PostCardProps) {
                 {post.upside && (
                   <section className="bg-emerald-500/5 rounded-lg p-4 border border-emerald-500/30">
                     <div className="flex items-center gap-2 mb-2">
-                      <TrendingUp className="w-5 h-5 text-emerald-400" />
-                      <h2 className="text-lg font-semibold text-emerald-400">Upside</h2>
+                      <TrendingUp className="w-4 h-4 text-emerald-400" />
+                      <h2 className="text-base font-semibold text-emerald-400">Upside</h2>
                     </div>
                     <p className="text-slate-300 leading-relaxed">{post.upside}</p>
                   </section>
@@ -109,8 +109,8 @@ export function PostCard({ post }: PostCardProps) {
                 {post.downside && (
                   <section className="bg-orange-500/5 rounded-lg p-4 border border-orange-500/30">
                     <div className="flex items-center gap-2 mb-2">
-                      <TrendingDown className="w-5 h-5 text-orange-400" />
-                      <h2 className="text-lg font-semibold text-orange-400">Downside</h2>
+                      <TrendingDown className="w-4 h-4 text-orange-400" />
+                      <h2 className="text-base font-semibold text-orange-400">Downside</h2>
                     </div>
                     <p className="text-slate-300 leading-relaxed">{post.downside}</p>
                   </section>

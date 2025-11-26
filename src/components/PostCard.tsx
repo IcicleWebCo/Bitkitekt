@@ -72,7 +72,7 @@ export function PostCard({ post }: PostCardProps) {
 
             {post.code_snippets && post.code_snippets.length > 0 && (
               <section className="space-y-4">
-                <h2 className="text-lg font-semibold text-cyan-400">Code Examples</h2>
+                {/*<h2 className="text-lg font-semibold text-cyan-400">Code Examples</h2>*/}
                 {post.code_snippets.map((snippet, idx) => (
                   <div key={idx} className="bg-slate-950 rounded-lg border border-slate-700/50 overflow-hidden">
                     {snippet.label && (

@@ -20,7 +20,9 @@ function App() {
 
   const loadPosts = async () => {
     try {
+      console.log('loading posts');
       const data = await postService.getAllPosts();
+      console.log(data);
       setPosts(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load posts');

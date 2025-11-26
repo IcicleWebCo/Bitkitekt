@@ -125,24 +125,48 @@ export function PostCard({ post }: PostCardProps) {
               </div>
             )}
 
-            {(post.performance_impact || post.compatibility_deprecated_in) && (
-              <section>
-                <div className="flex flex-wrap items-center gap-4 mb-3">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {(post.performance_impact || post.risk_level || post.compatibility_deprecated_in) && (
+                <section>
+                  <div className="flex flex-wrap items-center gap-4 mb-3">
+                    {post.performance_impact && (
+                      <h2 className="text-lg font-semibold text-sky-400">Performance Impact</h2>
+                    )}
+                    {post.risk_level && (
+                      <div className="flex items-center gap-2 text-sm">
+                        <span className="text-slate-400">Risk Level:</span>
+                        <span className="text-slate-200 font-mono">{post.risk_level}</span>
+                      </div>
+                    )}
+                    {post.compatibility_deprecated_in && (
+                      <div className="flex items-center gap-2 text-sm">
+                        <span className="text-slate-400">Deprecated In:</span>
+                        <span className="text-orange-400 font-mono">{post.compatibility_deprecated_in}</span>
+                      </div>
+                    )}
+                  </div>
                   {post.performance_impact && (
-                    <h2 className="text-lg font-semibold text-sky-400">Performance Impact</h2>
+                    <p className="text-slate-300 leading-relaxed">{post.performance_impact}</p>
                   )}
-                  {post.compatibility_deprecated_in && (
-                    <div className="flex items-center gap-2 text-sm">
-                      <span className="text-slate-400">Deprecated In:</span>
-                      <span className="text-orange-400 font-mono">{post.compatibility_deprecated_in}</span>
-                    </div>
-                  )}
-                </div>
-                {post.performance_impact && (
-                  <p className="text-slate-300 leading-relaxed">{post.performance_impact}</p>
-                )}
-              </section>
-            )}
+                </section>
+              )}
+
+              {post.tags && post.tags.length > 0 && (
+                <section>
+                  <div className="flex items-center gap-2 mb-3">
+                    <Tag className="w-5 h-5 text-slate-400" />
+                    <h2 className="text-lg font-semibold text-slate-300">Tags</h2>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {post.tags.map((tag, idx) => (
+                      <span key={idx} className="bg-slate-800 text-slate-300 px-3 py-1 rounded-full text-sm border border-slate-600">
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                </section>
+              )}
+            </div>
 
             {post.dependencies && post.dependencies.length > 0 && (
               <section className="bg-slate-800/30 rounded-lg p-4 border border-slate-700/50">
@@ -154,22 +178,6 @@ export function PostCard({ post }: PostCardProps) {
                   {post.dependencies.map((dep, idx) => (
                     <span key={idx} className="bg-violet-500/10 text-violet-300 px-3 py-1 rounded-md text-sm font-mono border border-violet-500/30">
                       {dep}
-                    </span>
-                  ))}
-                </div>
-              </section>
-            )}
-
-            {post.tags && post.tags.length > 0 && (
-              <section>
-                <div className="flex items-center gap-2 mb-3">
-                  <Tag className="w-5 h-5 text-slate-400" />
-                  <h2 className="text-lg font-semibold text-slate-300">Tags</h2>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {post.tags.map((tag, idx) => (
-                    <span key={idx} className="bg-slate-800 text-slate-300 px-3 py-1 rounded-full text-sm border border-slate-600">
-                      {tag}
                     </span>
                   ))}
                 </div>

@@ -33,8 +33,8 @@ export function PostCard({ post }: PostCardProps) {
               )}
 
               {post.difficulty && (
-                <div className="flex items-center gap-2 text-sm">
-                  <span className="text-slate-200 font-mono">{post.difficulty}</span>
+                <div className="inline-flex items-center gap-1.5 bg-orange-500/10 text-orange-300 px-3 py-1 rounded-md border border-orange-500/30">
+                  <span className="font-medium">{post.difficulty}</span>
                 </div>
               )}
 

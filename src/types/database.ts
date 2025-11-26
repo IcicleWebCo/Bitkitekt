@@ -26,6 +26,7 @@ export interface Post {
   compatibility_deprecated_in: string | null;
   tags: string[];
   last_verified: string;
+  difficulty: string;
 }
 
 export type PostInsert = Omit<Post, 'id' | 'created_at' | 'updated_at'>;

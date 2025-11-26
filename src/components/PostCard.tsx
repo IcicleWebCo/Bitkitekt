@@ -115,17 +115,9 @@ export function PostCard({ post }: PostCardProps) {
 
                 {post.downside && (
                   <section className="bg-orange-500/5 rounded-lg p-4 border border-orange-500/30">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        <TrendingDown className="w-4 h-4 text-orange-400" />
-                        <h2 className="text-base font-semibold text-orange-400">Downside</h2>
-                      </div>
-                      {post.risk_level && (
-                        <div className={`flex items-center gap-1.5 px-3 py-1 rounded-md border text-sm ${riskColors[post.risk_level]}`}> 
-                          <AlertTriangle className="w-3.5 h-3.5" />
-                          <span className="font-medium">{post.risk_level}</span>
-                        </div>
-                      )}
+                    <div className="flex items-center gap-2 mb-2">
+                      <TrendingDown className="w-4 h-4 text-orange-400" />
+                      <h2 className="text-base font-semibold text-orange-400">Downside</h2>
                     </div>
                     <p className="text-slate-300 leading-relaxed">{post.downside}</p>
                   </section>
@@ -133,11 +125,17 @@ export function PostCard({ post }: PostCardProps) {
               </div>
             )}
 
-            {(post.performance_impact || post.compatibility_deprecated_in) && (
+            {(post.performance_impact || post.risk_level || post.compatibility_deprecated_in) && (
               <section>
                 <div className="flex flex-wrap items-center gap-4 mb-3">
                   {post.performance_impact && (
                     <h2 className="text-lg font-semibold text-sky-400">Performance Impact</h2>
+                  )}
+                  {post.risk_level && (
+                    <div className="flex items-center gap-2 text-sm">
+                      <span className="text-slate-400">Risk Level:</span>
+                      <span className="text-slate-200 font-mono">{post.risk_level}</span>
+                    </div>
                   )}
                   {post.compatibility_deprecated_in && (
                     <div className="flex items-center gap-2 text-sm">

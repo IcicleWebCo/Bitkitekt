@@ -24,12 +24,31 @@ export function PostCard({ post }: PostCardProps) {
               {post.title}
             </h1>
 
-            {post.primary_topic && (
-              <div className="inline-flex items-center gap-2 bg-cyan-500/10 text-cyan-300 px-4 py-2 rounded-lg border border-cyan-500/30">
-                <Code2 className="w-4 h-4" />
-                <span className="font-medium">{post.primary_topic}</span>
+            <div className="flex flex-wrap items-center gap-3 text-sm">
+              {post.primary_topic && (
+                <div className="inline-flex items-center gap-2 bg-cyan-500/10 text-cyan-300 px-4 py-2 rounded-lg border border-cyan-500/30">
+                  <Code2 className="w-4 h-4" />
+                  <span className="font-medium">{post.primary_topic}</span>
+                </div>
+              )}
+
+              <div className="flex items-center gap-2 text-slate-400">
+                <Calendar className="w-4 h-4" />
+                <span>Last verified: {new Date(post.last_verified).toLocaleDateString()}</span>
               </div>
-            )}
+
+              {post.doc_url && (
+                <a
+                  href={post.doc_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 text-cyan-400 hover:text-cyan-300 transition-colors font-medium"
+                >
+                  <span>View Documentation</span>
+                  <ExternalLink className="w-4 h-4" />
+                </a>
+              )}
+            </div>
           </header>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -161,23 +180,6 @@ export function PostCard({ post }: PostCardProps) {
             </div>
           </div>
 
-          <footer className="flex flex-wrap items-center justify-between gap-4 pt-6 border-t border-slate-700/50 text-sm text-slate-400">
-            <div className="flex items-center gap-2">
-              <Calendar className="w-4 h-4" />
-              <span>Last verified: {new Date(post.last_verified).toLocaleDateString()}</span>
-            </div>
-            {post.doc_url && (
-              <a
-                href={post.doc_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-2 text-cyan-400 hover:text-cyan-300 transition-colors font-medium"
-              >
-                <span>View Documentation</span>
-                <ExternalLink className="w-4 h-4" />
-              </a>
-            )}
-          </footer>
         </article>
       </div>
 

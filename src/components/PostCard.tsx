@@ -20,23 +20,22 @@ export function PostCard({ post }: PostCardProps) {
         <article className="bg-slate-900/50 backdrop-blur-xl border border-slate-700/50 rounded-2xl shadow-2xl p-6 md:p-10 space-y-6">
 
           <header className="space-y-4 border-b border-slate-700/50 pb-6">
-            <div className="flex flex-wrap items-center justify-between gap-4">
-              <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-white leading-tight">
-                {post.title}
-              </h2>
-              {post.difficulty && (
-                <div className="flex items-center gap-2 text-sm">
-                  <span className="text-slate-400">Difficulty:</span>
-                  <span className="text-slate-200 font-mono">{post.difficulty}</span>
-                </div>
-              )}
-            </div>
+            <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-white leading-tight">
+              {post.title}
+            </h2>
 
             <div className="flex flex-wrap items-center gap-3 text-sm">
               {post.primary_topic && (
                 <div className="inline-flex items-center gap-1.5 bg-cyan-500/10 text-cyan-300 px-3 py-1 rounded-md border border-cyan-500/30">
                   <Code2 className="w-3.5 h-3.5" />
                   <span className="font-medium">{post.primary_topic}</span>
+                </div>
+              )}
+
+              {post.difficulty && (
+                <div className="flex items-center gap-2 text-sm">
+                  <span className="text-slate-400">Difficulty:</span>
+                  <span className="text-slate-200 font-mono">{post.difficulty}</span>
                 </div>
               )}
 

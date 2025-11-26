@@ -26,8 +26,8 @@ export function PostCard({ post }: PostCardProps) {
 
             <div className="flex flex-wrap items-center gap-3 text-sm">
               {post.primary_topic && (
-                <div className="inline-flex items-center gap-2 bg-cyan-500/10 text-cyan-300 px-4 py-2 rounded-lg border border-cyan-500/30">
-                  <Code2 className="w-4 h-4" />
+                <div className="inline-flex items-center gap-1.5 bg-cyan-500/10 text-cyan-300 px-3 py-1 rounded-md border border-cyan-500/30">
+                  <Code2 className="w-3.5 h-3.5" />
                   <span className="font-medium">{post.primary_topic}</span>
                 </div>
               )}

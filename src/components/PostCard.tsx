@@ -126,17 +126,11 @@ export function PostCard({ post }: PostCardProps) {
             )}
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {(post.performance_impact || post.risk_level || post.compatibility_deprecated_in) && (
+              {(post.performance_impact || post.compatibility_deprecated_in) && (
                 <section>
                   <div className="flex flex-wrap items-center gap-4 mb-3">
                     {post.performance_impact && (
                       <h2 className="text-lg font-semibold text-sky-400">Performance Impact</h2>
-                    )}
-                    {post.risk_level && (
-                      <div className="flex items-center gap-2 text-sm">
-                        <span className="text-slate-400">Risk Level:</span>
-                        <span className="text-slate-200 font-mono">{post.risk_level}</span>
-                      </div>
                     )}
                     {post.compatibility_deprecated_in && (
                       <div className="flex items-center gap-2 text-sm">

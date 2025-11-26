@@ -21,7 +21,7 @@ export function PostCard({ post }: PostCardProps) {
 
           <header className="space-y-4 border-b border-slate-700/50 pb-6">
             <div className="flex flex-wrap items-start justify-between gap-4">
-              <h1 className="text-4xl md:text-5xl font-bold text-white leading-tight flex-1">
+              <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white leading-tight flex-1">
                 {post.title}
               </h1>
               {post.risk_level && (

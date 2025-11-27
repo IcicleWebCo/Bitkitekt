@@ -1,137 +1,13 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2.57.4";
 import Anthropic from "npm:@anthropic-ai/sdk";
+import { parse } from "npm:@toon-format/toon@1.1.0";
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey"
 };
-function parseTOON(text) {
-  const tips = [];
-  const tipBlocks = text.split(/^@TIP$/m).filter((block)=>block.trim());
-  for (const block of tipBlocks){
-    const tip = {
-      code_snippets: [],
-      dependencies: [],
-      tags: []
-    };
-    const lines = block.split('\n');
-    let currentKey = '';
-    let currentValue = '';
-    let inMultiline = false;
-    let inCodeSnippet = false;
-    let currentCodeSnippet = {};
-    let inArray = false;
-    let arrayKey = '';
-    let arrayValues = [];
-    for(let i = 0; i < lines.length; i++){
-      const line = lines[i];
-      if (line.trim() === '') continue;
-      if (line.startsWith('@CODE_SNIPPET')) {
-        if (currentKey && currentValue) {
-          tip[currentKey] = currentValue.trim();
-          currentKey = '';
-          currentValue = '';
-        }
-        inCodeSnippet = true;
-        currentCodeSnippet = {};
-        continue;
-      }
-      if (line.startsWith('@END_CODE_SNIPPET')) {
-        if (Object.keys(currentCodeSnippet).length > 0) {
-          tip.code_snippets.push(currentCodeSnippet);
-        }
-        inCodeSnippet = false;
-        currentCodeSnippet = {};
-        continue;
-      }
-      if (line.startsWith('@ARRAY ')) {
-        if (currentKey && currentValue) {
-          tip[currentKey] = currentValue.trim();
-          currentKey = '';
-          currentValue = '';
-        }
-        inArray = true;
-        arrayKey = line.substring(7).trim();
-        arrayValues = [];
-        continue;
-      }
-      if (line.startsWith('@END_ARRAY')) {
-        if (inArray && arrayKey) {
-          tip[arrayKey] = arrayValues;
-        }
-        inArray = false;
-        arrayKey = '';
-        arrayValues = [];
-        continue;
-      }
-      if (inArray) {
-        const itemMatch = line.match(/^\s*-\s*(.+)$/);
-        if (itemMatch) {
-          arrayValues.push(itemMatch[1].trim());
-        }
-        continue;
-      }
-      const keyMatch = line.match(/^([a-z_]+):\s*(.*)$/);
-      if (keyMatch) {
-        if (currentKey && currentValue) {
-          if (inCodeSnippet) {
-            currentCodeSnippet[currentKey] = currentValue.trim();
-          } else {
-            tip[currentKey] = currentValue.trim();
-          }
-        }
-        currentKey = keyMatch[1];
-        currentValue = keyMatch[2];
-        if (currentValue.startsWith('<<<')) {
-          inMultiline = true;
-          currentValue = '';
-        } else if (currentValue) {
-          if (inCodeSnippet) {
-            currentCodeSnippet[currentKey] = currentValue.trim();
-            currentKey = '';
-            currentValue = '';
-          }
-        }
-        continue;
-      }
-      if (line.trim() === '>>>') {
-        inMultiline = false;
-        if (currentKey) {
-          if (inCodeSnippet) {
-            currentCodeSnippet[currentKey] = currentValue.trim();
-          } else {
-            tip[currentKey] = currentValue.trim();
-          }
-          currentKey = '';
-          currentValue = '';
-        }
-        continue;
-      }
-      if (inMultiline || currentValue.endsWith('<<<')) {
-        if (currentValue.endsWith('<<<')) {
-          currentValue = currentValue.slice(0, -3).trim();
-          inMultiline = true;
-        }
-        currentValue += (currentValue ? '\n' : '') + line;
-      }
-    }
-    if (currentKey && currentValue) {
-      if (inCodeSnippet) {
-        currentCodeSnippet[currentKey] = currentValue.trim();
-      } else {
-        tip[currentKey] = currentValue.trim();
-      }
-    }
-    if (Object.keys(currentCodeSnippet).length > 0) {
-      tip.code_snippets.push(currentCodeSnippet);
-    }
-    if (tip.title) {
-      tips.push(tip);
-    }
-  }
-  return tips;
-}
 function levenshteinDistance(str1, str2) {
   const s1 = str1.toLowerCase();
   const s2 = str2.toLowerCase();
@@ -295,7 +171,8 @@ Deno.serve(async (req)=>{
             try {
               const toonMatch = responseText.match(/```(?:toon)?\s*([\s\S]*?)```/);
               const toonText = toonMatch ? toonMatch[1] : responseText;
-              generatedTips = parseTOON(toonText.trim());
+              const parsed = parse(toonText.trim());
+              generatedTips = parsed.TIP || [];
             } catch (parseError) {
               console.error("Parse error:", parseError);
               console.error("Response:", responseText.substring(0, 500));

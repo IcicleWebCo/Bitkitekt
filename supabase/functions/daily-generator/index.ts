@@ -1,7 +1,6 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2.57.4";
 import Anthropic from "npm:@anthropic-ai/sdk@0.30.1";
-import { parse as parseToml } from "jsr:@std/toml@1.0.1";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -47,6 +46,151 @@ interface ClaudeResponse {
   compatibility_deprecated_in?: string;
   tags?: string[];
   difficulty?: string;
+}
+
+function parseTOON(text: string): ClaudeResponse[] {
+  const tips: ClaudeResponse[] = [];
+  const tipBlocks = text.split(/^@TIP$/m).filter(block => block.trim());
+  
+  for (const block of tipBlocks) {
+    const tip: any = {
+      code_snippets: [],
+      dependencies: [],
+      tags: [],
+    };
+    
+    const lines = block.split('\n');
+    let currentKey = '';
+    let currentValue = '';
+    let inMultiline = false;
+    let inCodeSnippet = false;
+    let currentCodeSnippet: any = {};
+    let inArray = false;
+    let arrayKey = '';
+    let arrayValues: string[] = [];
+    
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      
+      if (line.trim() === '') continue;
+      
+      if (line.startsWith('@CODE_SNIPPET')) {
+        if (currentKey && currentValue) {
+          tip[currentKey] = currentValue.trim();
+          currentKey = '';
+          currentValue = '';
+        }
+        inCodeSnippet = true;
+        currentCodeSnippet = {};
+        continue;
+      }
+      
+      if (line.startsWith('@END_CODE_SNIPPET')) {
+        if (Object.keys(currentCodeSnippet).length > 0) {
+          tip.code_snippets.push(currentCodeSnippet);
+        }
+        inCodeSnippet = false;
+        currentCodeSnippet = {};
+        continue;
+      }
+      
+      if (line.startsWith('@ARRAY ')) {
+        if (currentKey && currentValue) {
+          tip[currentKey] = currentValue.trim();
+          currentKey = '';
+          currentValue = '';
+        }
+        inArray = true;
+        arrayKey = line.substring(7).trim();
+        arrayValues = [];
+        continue;
+      }
+      
+      if (line.startsWith('@END_ARRAY')) {
+        if (inArray && arrayKey) {
+          tip[arrayKey] = arrayValues;
+        }
+        inArray = false;
+        arrayKey = '';
+        arrayValues = [];
+        continue;
+      }
+      
+      if (inArray) {
+        const itemMatch = line.match(/^\s*-\s*(.+)$/);
+        if (itemMatch) {
+          arrayValues.push(itemMatch[1].trim());
+        }
+        continue;
+      }
+      
+      const keyMatch = line.match(/^([a-z_]+):\s*(.*)$/);
+      if (keyMatch) {
+        if (currentKey && currentValue) {
+          if (inCodeSnippet) {
+            currentCodeSnippet[currentKey] = currentValue.trim();
+          } else {
+            tip[currentKey] = currentValue.trim();
+          }
+        }
+        
+        currentKey = keyMatch[1];
+        currentValue = keyMatch[2];
+        
+        if (currentValue.startsWith('<<<')) {
+          inMultiline = true;
+          currentValue = '';
+        } else if (currentValue) {
+          if (inCodeSnippet) {
+            currentCodeSnippet[currentKey] = currentValue.trim();
+            currentKey = '';
+            currentValue = '';
+          }
+        }
+        continue;
+      }
+      
+      if (line.trim() === '>>>') {
+        inMultiline = false;
+        if (currentKey) {
+          if (inCodeSnippet) {
+            currentCodeSnippet[currentKey] = currentValue.trim();
+          } else {
+            tip[currentKey] = currentValue.trim();
+          }
+          currentKey = '';
+          currentValue = '';
+        }
+        continue;
+      }
+      
+      if (inMultiline || currentValue.endsWith('<<<')) {
+        if (currentValue.endsWith('<<<')) {
+          currentValue = currentValue.slice(0, -3).trim();
+          inMultiline = true;
+        }
+        currentValue += (currentValue ? '\n' : '') + line;
+      }
+    }
+    
+    if (currentKey && currentValue) {
+      if (inCodeSnippet) {
+        currentCodeSnippet[currentKey] = currentValue.trim();
+      } else {
+        tip[currentKey] = currentValue.trim();
+      }
+    }
+    
+    if (Object.keys(currentCodeSnippet).length > 0) {
+      tip.code_snippets.push(currentCodeSnippet);
+    }
+    
+    if (tip.title) {
+      tips.push(tip as ClaudeResponse);
+    }
+  }
+  
+  return tips;
 }
 
 function levenshteinDistance(str1: string, str2: string): number {
@@ -237,7 +381,7 @@ Deno.serve(async (req: Request) => {
           attempts++;
           console.log("Attempt", attempts, "Need", 5 - inserted_count, "more posts");
 
-          const systemPrompt = "You are a technical content generator. Your task is to generate coding tips/patterns in TOML format based on the user's prompt.\n\nIMPORTANT RULES:\n1. Return ONLY valid TOML with 3-5 [[tip]] sections\n2. Each [[tip]] section must follow this exact structure:\n\n[[tip]]\ntitle = \"Clear, descriptive title\"\nsummary = \"Brief 1-2 sentence overview\"\nproblem_solved = \"What problem does this solve?\"\nupside = \"Benefits and advantages\"\ndownside = \"Limitations and trade-offs\"\nrisk_level = \"Low\" # or Medium or High\nperformance_impact = \"Description of performance implications\"\ndoc_url = \"https://example.com/docs\"\nprimary_topic = \"JavaScript\"\nsyntax = \"javascript\"\ndependencies = [\"dep1\", \"dep2\"]\ncompatibility_min_version = \"1.0.0\"\ncompatibility_deprecated_in = \"\"\ntags = [\"tag1\", \"tag2\"]\ndifficulty = \"Intermediate\"\n\n[[tip.code_snippets]]\nlabel = \"Example\"\nlanguage = \"javascript\"\ncontent = \"\"\"\ncode here\n\"\"\"\n\n3. DO NOT generate topics similar to these existing ones:\n" + ignoreContextText + "\n\n4. Be creative and diverse. Focus on different aspects, patterns, or technologies.\n5. Return ONLY the TOML content, no additional text or markdown code blocks.";
+          const systemPrompt = "You are a technical content generator. Your task is to generate coding tips/patterns in TOON (Token-Oriented Object Notation) format based on the user's prompt.\n\nIMPORTANT RULES:\n1. Return ONLY valid TOON with 3-5 tips\n2. Use @TIP to start each tip block\n3. Simple fields use: key: value\n4. Multiline text uses: key: <<<\n  content\n  more content\n>>>\n5. Arrays use:\n@ARRAY key_name\n- item1\n- item2\n@END_ARRAY\n6. Code snippets use:\n@CODE_SNIPPET\nlabel: Example\nlanguage: javascript\ncontent: <<<\ncode here\n>>>\n@END_CODE_SNIPPET\n\nEXAMPLE TOON FORMAT:\n\n@TIP\ntitle: Using Array.prototype.reduce() for Complex Aggregations\nsummary: Learn how to leverage reduce for powerful data transformations\nproblem_solved: Simplifies complex array transformations into single operations\nupside: More functional, chainable, and readable than imperative loops\ndownside: Can be harder to debug and may have performance overhead\nrisk_level: Low\nperformance_impact: Slightly slower than for loops for simple cases\ndoc_url: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/reduce\nprimary_topic: JavaScript\nsyntax: javascript\ncompatibility_min_version: ES5\ncompatibility_deprecated_in: \ndifficulty: Intermediate\n@ARRAY dependencies\n@END_ARRAY\n@ARRAY tags\n- functional-programming\n- arrays\n- reduce\n@END_ARRAY\n@CODE_SNIPPET\nlabel: Basic Example\nlanguage: javascript\ncontent: <<<\nconst numbers = [1, 2, 3, 4, 5];\nconst sum = numbers.reduce((acc, num) => acc + num, 0);\nconsole.log(sum); // 15\n>>>\n@END_CODE_SNIPPET\n\nDO NOT generate topics similar to these existing ones:\n" + ignoreContextText + "\n\nBe creative and diverse. Focus on different aspects, patterns, or technologies.\nReturn ONLY the TOON content, no additional text or markdown code blocks.";
 
           try {
             const message = await anthropic.messages.create({
@@ -261,10 +405,9 @@ Deno.serve(async (req: Request) => {
 
             let generatedTips: ClaudeResponse[];
             try {
-              const tomlMatch = responseText.match(/```(?:toml)?\s*([\s\S]*?)```/);
-              const tomlText = tomlMatch ? tomlMatch[1] : responseText;
-              const parsed = parseToml(tomlText.trim()) as { tip: ClaudeResponse[] };
-              generatedTips = parsed.tip || [];
+              const toonMatch = responseText.match(/```(?:toon)?\s*([\s\S]*?)```/);
+              const toonText = toonMatch ? toonMatch[1] : responseText;
+              generatedTips = parseTOON(toonText.trim());
             } catch (parseError) {
               console.error("Parse error:", parseError);
               console.error("Response:", responseText.substring(0, 500));
@@ -272,7 +415,7 @@ Deno.serve(async (req: Request) => {
             }
 
             if (!Array.isArray(generatedTips)) {
-              console.error("Claude response does not contain tip array");
+              console.error("Failed to parse tips from TOON");
               continue;
             }
 

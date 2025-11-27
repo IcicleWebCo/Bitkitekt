@@ -45,10 +45,10 @@ export function PostCard({ post }: PostCardProps) {
                 </div>
               )}
 
-              <div className="flex items-center gap-2 text-slate-400">
+              {/*<div className="flex items-center gap-2 text-slate-400">
                 <Calendar className="w-4 h-4" />
                 <span>Last verified: {new Date(post.last_verified).toLocaleDateString()}</span>
-              </div>
+              </div>*/}
 
               {post.doc_url && (
                 <a

@@ -1,7 +1,7 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2.57.4";
 import Anthropic from "npm:@anthropic-ai/sdk";
-import { parse } from "npm:@toon-format/toon@1.1.0";
+import { decode } from "npm:@toon-format/toon@2.0.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -171,7 +171,7 @@ Deno.serve(async (req)=>{
             try {
               const toonMatch = responseText.match(/```(?:toon)?\s*([\s\S]*?)```/);
               const toonText = toonMatch ? toonMatch[1] : responseText;
-              const parsed = parse(toonText.trim());
+              const parsed = decode(toonText.trim());
               generatedTips = parsed.TIP || [];
             } catch (parseError) {
               console.error("Parse error:", parseError);

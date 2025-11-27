@@ -1,6 +1,7 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2.57.4";
 import Anthropic from "npm:@anthropic-ai/sdk@0.30.1";
+import { parse as parseToml } from "jsr:@std/toml@1.0.1";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -236,7 +237,7 @@ Deno.serve(async (req: Request) => {
           attempts++;
           console.log("Attempt", attempts, "Need", 5 - inserted_count, "more posts");
 
-          const systemPrompt = "You are a technical content generator. Your task is to generate JSON array of coding tips/patterns based on the user's prompt.\n\nIMPORTANT RULES:\n1. Return ONLY a valid JSON array with 3-5 items\n2. Each item must follow this exact structure:\n{\n  \"title\": \"Clear, descriptive title\",\n  \"summary\": \"Brief 1-2 sentence overview\",\n  \"problem_solved\": \"What problem does this solve?\",\n  \"upside\": \"Benefits and advantages\",\n  \"downside\": \"Limitations and trade-offs\",\n  \"risk_level\": \"Low\" | \"Medium\" | \"High\",\n  \"performance_impact\": \"Description of performance implications\",\n  \"doc_url\": \"URL to official documentation (if applicable)\",\n  \"primary_topic\": \"Main technology/language (e.g., JavaScript, React, Python)\",\n  \"syntax\": \"Syntax highlighting identifier (e.g., javascript, python)\",\n  \"code_snippets\": [{\"label\": \"Example\", \"language\": \"javascript\", \"content\": \"code here\"}],\n  \"dependencies\": [\"array\", \"of\", \"dependencies\"],\n  \"compatibility_min_version\": \"Minimum version if applicable\",\n  \"compatibility_deprecated_in\": \"Deprecated version if applicable\",\n  \"tags\": [\"relevant\", \"tags\"],\n  \"difficulty\": \"Beginner\" | \"Intermediate\" | \"Advanced\"\n}\n\n3. DO NOT generate topics similar to these existing ones:\n" + ignoreContextText + "\n\n4. Be creative and diverse. Focus on different aspects, patterns, or technologies.\n5. Return ONLY the JSON array, no additional text.";
+          const systemPrompt = "You are a technical content generator. Your task is to generate coding tips/patterns in TOML format based on the user's prompt.\n\nIMPORTANT RULES:\n1. Return ONLY valid TOML with 3-5 [[tip]] sections\n2. Each [[tip]] section must follow this exact structure:\n\n[[tip]]\ntitle = \"Clear, descriptive title\"\nsummary = \"Brief 1-2 sentence overview\"\nproblem_solved = \"What problem does this solve?\"\nupside = \"Benefits and advantages\"\ndownside = \"Limitations and trade-offs\"\nrisk_level = \"Low\" # or Medium or High\nperformance_impact = \"Description of performance implications\"\ndoc_url = \"https://example.com/docs\"\nprimary_topic = \"JavaScript\"\nsyntax = \"javascript\"\ndependencies = [\"dep1\", \"dep2\"]\ncompatibility_min_version = \"1.0.0\"\ncompatibility_deprecated_in = \"\"\ntags = [\"tag1\", \"tag2\"]\ndifficulty = \"Intermediate\"\n\n[[tip.code_snippets]]\nlabel = \"Example\"\nlanguage = \"javascript\"\ncontent = \"\"\"\ncode here\n\"\"\"\n\n3. DO NOT generate topics similar to these existing ones:\n" + ignoreContextText + "\n\n4. Be creative and diverse. Focus on different aspects, patterns, or technologies.\n5. Return ONLY the TOML content, no additional text or markdown code blocks.";
 
           try {
             const message = await anthropic.messages.create({
@@ -260,17 +261,18 @@ Deno.serve(async (req: Request) => {
 
             let generatedTips: ClaudeResponse[];
             try {
-              const jsonMatch = responseText.match(/```(?:json)?\s*([\s\S]*?)```/);
-              const jsonText = jsonMatch ? jsonMatch[1] : responseText;
-              generatedTips = JSON.parse(jsonText.trim());
+              const tomlMatch = responseText.match(/```(?:toml)?\s*([\s\S]*?)```/);
+              const tomlText = tomlMatch ? tomlMatch[1] : responseText;
+              const parsed = parseToml(tomlText.trim()) as { tip: ClaudeResponse[] };
+              generatedTips = parsed.tip || [];
             } catch (parseError) {
               console.error("Parse error:", parseError);
-              console.error("Response:", responseText);
+              console.error("Response:", responseText.substring(0, 500));
               continue;
             }
 
             if (!Array.isArray(generatedTips)) {
-              console.error("Claude response is not an array");
+              console.error("Claude response does not contain tip array");
               continue;
             }
 

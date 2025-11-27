@@ -1,6 +1,6 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2.57.4";
-import Anthropic from "npm:@anthropic-ai/sdk@0.30.1";
+import Anthropic from "npm:@anthropic-ai/sdk";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -385,9 +385,9 @@ Deno.serve(async (req: Request) => {
 
           try {
             const message = await anthropic.messages.create({
-              model: "claude-3-5-sonnet-20241022",
-              max_tokens: 4096,
-              temperature: 0.9,
+              model: "claude-sonnet-4-20250514",
+              max_tokens: 20000,
+              temperature: 1,
               messages: [
                 {
                   role: "user",

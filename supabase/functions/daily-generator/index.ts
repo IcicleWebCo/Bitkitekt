@@ -150,7 +150,35 @@ Deno.serve(async (req)=>{
         while(inserted_count < 5 && attempts < maxAttempts){
           attempts++;
           console.log("Attempt", attempts, "Need", 5 - inserted_count, "more posts");
-          const systemPrompt = "You are a technical content generator. Your task is to generate coding tips/patterns in TOON (Token-Oriented Object Notation) format based on the user's prompt.\n\nIMPORTANT RULES:\n1. Return ONLY valid TOON with 3-5 tips\n2. Use @TIP to start each tip block\n3. Simple fields use: key: value\n4. Multiline text uses: key: <<<\n  content\n  more content\n>>>\n5. Arrays use:\n@ARRAY key_name\n- item1\n- item2\n@END_ARRAY\n6. Code snippets use:\n@CODE_SNIPPET\nlabel: Example\nlanguage: javascript\ncontent: <<<\ncode here\n>>>\n@END_CODE_SNIPPET\n\nEXAMPLE TOON FORMAT:\n\n@TIP\ntitle: Using Array.prototype.reduce() for Complex Aggregations\nsummary: Learn how to leverage reduce for powerful data transformations\nproblem_solved: Simplifies complex array transformations into single operations\nupside: More functional, chainable, and readable than imperative loops\ndownside: Can be harder to debug and may have performance overhead\nrisk_level: Low\nperformance_impact: Slightly slower than for loops for simple cases\ndoc_url: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/reduce\nprimary_topic: JavaScript\nsyntax: javascript\ncompatibility_min_version: ES5\ncompatibility_deprecated_in: \ndifficulty: Intermediate\n@ARRAY dependencies\n@END_ARRAY\n@ARRAY tags\n- functional-programming\n- arrays\n- reduce\n@END_ARRAY\n@CODE_SNIPPET\nlabel: Basic Example\nlanguage: javascript\ncontent: <<<\nconst numbers = [1, 2, 3, 4, 5];\nconst sum = numbers.reduce((acc, num) => acc + num, 0);\nconsole.log(sum); // 15\n>>>\n@END_CODE_SNIPPET\n\nDO NOT generate topics similar to these existing ones:\n" + ignoreContextText + "\n\nBe creative and diverse. Focus on different aspects, patterns, or technologies.\nReturn ONLY the TOON content, no additional text or markdown code blocks.";
+          const systemPrompt = `You are a technical content generator. Generate coding tips in TOON format (Token-Oriented Object Notation) - a compact, indented format.
+
+TOON SYNTAX:
+- Arrays use brackets with field names: TIP[3]{field1,field2}:
+- Each row is one item with comma-separated values
+- Nested objects use indentation (2 spaces)
+- Empty values are represented as empty string between commas
+
+GENERATE 3-5 TIPS IN THIS EXACT FORMAT:
+
+TIP[N]{title,summary,problem_solved,upside,downside,risk_level,performance_impact,doc_url,primary_topic,syntax,compatibility_min_version,compatibility_deprecated_in,difficulty}:
+Title here,Summary text,Problem it solves,Benefits,Drawbacks,Low/Medium/High,Performance notes,https://docs.url,Topic,language,version,,Beginner/Intermediate/Advanced
+  code_snippets[M]{label,language,content}:
+  Example Name,javascript,const x = 1;
+  dependencies[K]:
+  dep1,dep2
+  tags[J]:
+  tag1,tag2,tag3
+
+IMPORTANT:
+- All text must be on ONE line (no line breaks in strings)
+- Use proper comma separation
+- Empty fields should be represented as blank (two commas with nothing between)
+- Arrays like dependencies and tags are nested with proper indentation
+
+DO NOT generate topics similar to:
+${ignoreContextText}
+
+Return ONLY the TOON content, no markdown blocks or extra text.`;
           try {
             const message = await anthropic.messages.create({
               model: "claude-sonnet-4-20250514",
@@ -170,8 +198,11 @@ Deno.serve(async (req)=>{
             try {
               const toonMatch = responseText.match(/```(?:toon)?\s*([\s\S]*?)```/);
               const toonText = toonMatch ? toonMatch[1] : responseText;
+              console.log("TOON text to parse:", toonText.substring(0, 300));
               const parsed = decode(toonText.trim());
+              console.log("Parsed result:", JSON.stringify(parsed).substring(0, 500));
               generatedTips = parsed.TIP || [];
+              console.log("Tips extracted:", generatedTips.length);
             } catch (parseError) {
               console.error("Parse error:", parseError);
               console.error("Response:", responseText.substring(0, 500));

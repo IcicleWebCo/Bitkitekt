@@ -1,8 +1,9 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
-import { FileCode, LogOut, User as UserIcon } from 'lucide-react';
+import { FileCode, LogOut, User as UserIcon, ArrowLeft } from 'lucide-react';
 import { supabase } from './lib/supabase';
 import { postService } from './services/postService';
 import { PostCard } from './components/PostCard';
+import { PostCardDetail } from './components/PostCardDetail';
 import { FilterBar } from './components/FilterBar';
 import { Login } from './components/Login';
 import { Register } from './components/Register';
@@ -26,6 +27,7 @@ function App() {
   const [isPasswordRecovery, setIsPasswordRecovery] = useState(false);
   const [emailConfirmation, setEmailConfirmation] = useState<ConfirmationState>(null);
   const [showProfile, setShowProfile] = useState(false);
+  const [selectedPost, setSelectedPost] = useState<Post | null>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -177,6 +179,51 @@ function App() {
     return <Profile onBack={() => setShowProfile(false)} />;
   }
 
+  if (selectedPost) {
+    return (
+      <div className="min-h-screen bg-slate-950">
+        <div className="fixed top-0 left-0 right-0 z-[60] bg-slate-900/80 backdrop-blur-xl border-b border-slate-700/50 shadow-xl">
+          <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+            <button
+              onClick={() => setSelectedPost(null)}
+              className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-lg transition-colors"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Back to List
+            </button>
+
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 bg-cyan-500/20 rounded-full flex items-center justify-center">
+                  <UserIcon className="w-4 h-4 text-cyan-400" />
+                </div>
+                <span className="text-sm font-medium text-white">{profile?.username}</span>
+              </div>
+              <button
+                onClick={() => setShowProfile(true)}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-md transition-colors text-sm"
+              >
+                <UserIcon className="w-4 h-4" />
+                Profile
+              </button>
+              <button
+                onClick={signOut}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-md transition-colors text-sm"
+              >
+                <LogOut className="w-4 h-4" />
+                Sign Out
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div className="overflow-y-auto">
+          <PostCardDetail post={selectedPost} />
+        </div>
+      </div>
+    );
+  }
+
   if (posts.length === 0) {
     return (
       <div className="h-screen w-full flex items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
@@ -239,7 +286,11 @@ function App() {
           </div>
         ) : (
           filteredPosts.map((post) => (
-            <PostCard key={post.id} post={post} />
+            <PostCard
+              key={post.id}
+              post={post}
+              onViewDetail={() => setSelectedPost(post)}
+            />
           ))
         )}
       </div>

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ExternalLink, AlertTriangle, TrendingUp, TrendingDown, Code2, Package, Tag, Calendar, ChevronDown, ChevronUp, ArrowRight } from 'lucide-react';
+import { ExternalLink, AlertTriangle, TrendingUp, TrendingDown, Code2, Package, Tag, Calendar, ChevronDown, ChevronUp } from 'lucide-react';
 import type { Post } from '../types/database';
 
 const riskColors = {
@@ -8,12 +8,11 @@ const riskColors = {
   High: 'bg-red-500/20 text-red-300 border-red-500/50',
 };
 
-interface PostCardProps {
+interface PostCardDetailProps {
   post: Post;
-  onViewDetail?: () => void;
 }
 
-export function PostCard({ post, onViewDetail }: PostCardProps) {
+export function PostCardDetail({ post }: PostCardDetailProps) {
   const [expandedSnippets, setExpandedSnippets] = useState<Set<number>>(new Set());
 
   const toggleSnippet = (idx: number) => {
@@ -35,20 +34,9 @@ export function PostCard({ post, onViewDetail }: PostCardProps) {
         <article className="bg-slate-900/50 backdrop-blur-xl border border-slate-700/50 rounded-xl md:rounded-2xl shadow-2xl p-4 sm:p-6 md:p-10 space-y-4 md:space-y-6">
 
           <header className="space-y-3 md:space-y-4 border-b border-slate-700/50 pb-4 md:pb-6">
-            <div className="flex items-start justify-between gap-4">
-              <h2 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold text-white leading-tight flex-1">
-                {post.title}
-              </h2>
-              {onViewDetail && (
-                <button
-                  onClick={onViewDetail}
-                  className="flex items-center gap-2 px-4 py-2 bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 rounded-lg border border-cyan-500/50 transition-all hover:scale-105 hover:shadow-lg hover:shadow-cyan-500/20 font-medium text-sm whitespace-nowrap"
-                >
-                  <span>View Details</span>
-                  <ArrowRight className="w-4 h-4" />
-                </button>
-              )}
-            </div>
+            <h2 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold text-white leading-tight">
+              {post.title}
+            </h2>
 
             <div className="flex flex-wrap items-center gap-2 md:gap-3 text-xs sm:text-sm">
               {post.primary_topic && (

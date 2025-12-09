@@ -71,18 +71,6 @@ export function PostCard({ post, onViewDetail }: PostCardProps) {
                 </div>
               )}
 
-              {post.doc_url && (
-                <a
-                  href={post.doc_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-1.5 sm:gap-2 text-cyan-400 hover:text-cyan-300 transition-colors font-medium"
-                >
-                  <span className="hidden sm:inline">View Documentation</span>
-                  <span className="sm:hidden">Docs</span>
-                  <ExternalLink className="w-3 h-3 sm:w-4 sm:h-4" />
-                </a>
-              )}
             </div>
           </header>
 

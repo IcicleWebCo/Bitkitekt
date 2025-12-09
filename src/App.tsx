@@ -1,15 +1,19 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { FileCode, LogOut, User as UserIcon } from 'lucide-react';
+import { supabase } from './lib/supabase';
 import { postService } from './services/postService';
 import { PostCard } from './components/PostCard';
 import { FilterBar } from './components/FilterBar';
 import { Login } from './components/Login';
 import { Register } from './components/Register';
 import { ForgotPassword } from './components/ForgotPassword';
+import { ResetPassword } from './components/ResetPassword';
+import { EmailConfirmation } from './components/EmailConfirmation';
 import { useAuth } from './contexts/AuthContext';
 import type { Post } from './types/database';
 
 type AuthMode = 'login' | 'register' | 'forgot-password';
+type ConfirmationState = { type: 'confirmed' | 'error'; message?: string } | null;
 
 function App() {
   const { user, profile, loading: authLoading, signOut } = useAuth();
@@ -18,11 +22,38 @@ function App() {
   const [error, setError] = useState<string | null>(null);
   const [selectedTopics, setSelectedTopics] = useState<Set<string>>(new Set());
   const [authMode, setAuthMode] = useState<AuthMode>('login');
+  const [isPasswordRecovery, setIsPasswordRecovery] = useState(false);
+  const [emailConfirmation, setEmailConfirmation] = useState<ConfirmationState>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     loadPosts();
   }, []);
+
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      (async () => {
+        if (event === 'PASSWORD_RECOVERY') {
+          setIsPasswordRecovery(true);
+        } else if (event === 'SIGNED_IN' && session) {
+          if (isPasswordRecovery) {
+            setIsPasswordRecovery(false);
+          }
+          const hashParams = new URLSearchParams(window.location.hash.substring(1));
+          if (hashParams.get('type') === 'email' || hashParams.get('type') === 'signup') {
+            setEmailConfirmation({ type: 'confirmed' });
+            window.history.replaceState({}, document.title, window.location.pathname);
+          }
+        } else if (event === 'USER_UPDATED') {
+          if (isPasswordRecovery) {
+            setIsPasswordRecovery(false);
+          }
+        }
+      })();
+    });
+
+    return () => subscription.unsubscribe();
+  }, [isPasswordRecovery]);
 
   const loadPosts = async () => {
     try {
@@ -97,6 +128,26 @@ function App() {
         <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-8 max-w-md">
           <p className="text-red-400 text-lg">{error}</p>
         </div>
+      </div>
+    );
+  }
+
+  if (emailConfirmation) {
+    return (
+      <div className="min-h-screen w-full bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4">
+        <EmailConfirmation
+          type={emailConfirmation.type}
+          message={emailConfirmation.message}
+          onContinue={() => setEmailConfirmation(null)}
+        />
+      </div>
+    );
+  }
+
+  if (isPasswordRecovery) {
+    return (
+      <div className="min-h-screen w-full bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4">
+        <ResetPassword onComplete={() => setIsPasswordRecovery(false)} />
       </div>
     );
   }

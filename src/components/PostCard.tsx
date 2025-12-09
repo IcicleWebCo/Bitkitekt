@@ -152,41 +152,6 @@ export function PostCard({ post, onViewDetail }: PostCardProps) {
               </section>
             )}
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
-
-
-              {post.tags && post.tags.length > 0 && (
-                <section>
-                  <div className="flex items-center gap-2 mb-2 md:mb-3">
-                    <Tag className="w-4 h-4 md:w-5 md:h-5 text-slate-400" />
-                    <h2 className="text-base md:text-lg font-semibold text-slate-300">Tags</h2>
-                  </div>
-                  <div className="flex flex-wrap gap-1.5 md:gap-2">
-                    {post.tags.map((tag, idx) => (
-                      <span key={idx} className="bg-slate-800 text-slate-300 px-2 md:px-3 py-0.5 md:py-1 rounded-full text-xs md:text-sm border border-slate-600">
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
-                </section>
-              )}
-            </div>
-
-            {post.dependencies && post.dependencies.length > 0 && (
-              <section className="bg-slate-800/30 rounded-lg p-3 md:p-4 border border-slate-700/50">
-                <div className="flex items-center gap-2 mb-2 md:mb-3">
-                  <Package className="w-4 h-4 md:w-5 md:h-5 text-violet-400" />
-                  <h2 className="text-base md:text-lg font-semibold text-violet-400">Dependencies</h2>
-                </div>
-                <div className="flex flex-wrap gap-1.5 md:gap-2">
-                  {post.dependencies.map((dep, idx) => (
-                    <span key={idx} className="bg-violet-500/10 text-violet-300 px-2 md:px-3 py-0.5 md:py-1 rounded-md text-xs md:text-sm font-mono border border-violet-500/30">
-                      {dep}
-                    </span>
-                  ))}
-                </div>
-              </section>
-            )}
           </div>
 
         </article>

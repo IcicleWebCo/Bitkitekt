@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { ExternalLink, AlertTriangle, TrendingUp, TrendingDown, Code2, Package, Tag, Calendar, ChevronDown, ChevronUp } from 'lucide-react';
+import { CommentSection } from './CommentSection';
 import type { Post } from '../types/database';
 
 const riskColors = {
@@ -218,11 +219,9 @@ export function PostCardDetail({ post }: PostCardDetailProps) {
             )}
           </div>
 
-        </article>
-      </div>
+          <CommentSection postId={post.id} />
 
-      <div className="absolute bottom-4 md:bottom-8 left-1/2 -translate-x-1/2 text-slate-500 text-xs md:text-sm animate-bounce">
-        Scroll for more
+        </article>
       </div>
     </div>
   );

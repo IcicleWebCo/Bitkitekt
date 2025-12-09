@@ -32,6 +32,34 @@ export interface Post {
 export type PostInsert = Omit<Post, 'id' | 'created_at' | 'updated_at'>;
 export type PostUpdate = Partial<PostInsert>;
 
+export interface Profile {
+  id: string;
+  username: string;
+  email: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Comment {
+  id: string;
+  post_id: string;
+  user_id: string;
+  parent_comment_id: string | null;
+  content: string;
+  created_at: string;
+  updated_at: string;
+  deleted_at: string | null;
+  is_edited: boolean;
+}
+
+export interface CommentWithProfile extends Comment {
+  profile: Profile;
+  replies?: CommentWithProfile[];
+}
+
+export type CommentInsert = Omit<Comment, 'id' | 'created_at' | 'updated_at' | 'deleted_at' | 'is_edited'>;
+export type CommentUpdate = Partial<Pick<Comment, 'content' | 'is_edited' | 'deleted_at'>>;
+
 export interface Database {
   public: {
     Tables: {
@@ -39,6 +67,14 @@ export interface Database {
         Row: Post;
         Insert: PostInsert;
         Update: PostUpdate;
+      };
+      profiles: {
+        Row: Profile;
+      };
+      comments: {
+        Row: Comment;
+        Insert: CommentInsert;
+        Update: CommentUpdate;
       };
     };
   };

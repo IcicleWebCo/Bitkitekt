@@ -152,30 +152,6 @@ export function PostCard({ post, onViewDetail }: PostCardProps) {
               </section>
             )}
 
-            {(post.upside || post.downside) && (
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 md:gap-6">
-                {post.upside && (
-                  <section className="bg-emerald-500/5 rounded-lg p-3 md:p-4 border border-emerald-500/30">
-                    <div className="flex items-center gap-2 mb-2">
-                      <TrendingUp className="w-3.5 h-3.5 md:w-4 md:h-4 text-emerald-400" />
-                      <h2 className="text-sm md:text-base font-semibold text-emerald-400">Upside</h2>
-                    </div>
-                    <p className="text-xs md:text-sm text-slate-300 leading-relaxed">{post.upside}</p>
-                  </section>
-                )}
-
-                {post.downside && (
-                  <section className="bg-orange-500/5 rounded-lg p-3 md:p-4 border border-orange-500/30">
-                    <div className="flex items-center gap-2 mb-2">
-                      <TrendingDown className="w-3.5 h-3.5 md:w-4 md:h-4 text-orange-400" />
-                      <h2 className="text-sm md:text-base font-semibold text-orange-400">Downside</h2>
-                    </div>
-                    <p className="text-xs md:text-sm text-slate-300 leading-relaxed">{post.downside}</p>
-                  </section>
-                )}
-              </div>
-            )}
-
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
               {(post.performance_impact || post.compatibility_deprecated_in) && (
                 <section>

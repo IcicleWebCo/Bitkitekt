@@ -24,7 +24,7 @@ export function FilterBar({ topics, selectedTopics, onToggleTopic, onClearAll }:
   const hasFilters = selectedTopics.size > 0;
 
   return (
-    <div className="fixed top-0 left-0 right-0 z-50 bg-slate-950/80 backdrop-blur-xl border-b border-slate-700/30 shadow-2xl">
+    <div className="w-full bg-slate-950/80 backdrop-blur-xl border-b border-slate-700/30 shadow-2xl">
       <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 py-3 md:py-4">
         <div className="flex items-center gap-2 md:gap-3">
           <div className="flex items-center gap-2 flex-shrink-0">

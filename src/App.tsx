@@ -96,7 +96,7 @@ function App() {
   }
 
   return (
-    <>
+    <div className="h-screen overflow-y-scroll snap-y snap-mandatory scrollbar-hide bg-slate-950">
       {uniqueTopics.length > 0 && (
         <FilterBar
           topics={uniqueTopics}
@@ -105,27 +105,25 @@ function App() {
           onClearAll={clearAllFilters}
         />
       )}
-      <div className="h-screen overflow-y-scroll snap-y snap-mandatory scrollbar-hide bg-slate-950 pt-24 md:pt-28">
-        {filteredPosts.length === 0 ? (
-          <div className="h-screen w-full flex items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
-            <div className="text-center">
-              <FileCode className="w-20 h-20 text-slate-600 mx-auto mb-4" />
-              <p className="text-slate-400 text-xl">No posts match your filters</p>
-              <button
-                onClick={clearAllFilters}
-                className="mt-4 px-4 py-2 bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 rounded-lg border border-cyan-500/50 transition-colors"
-              >
-                Clear Filters
-              </button>
-            </div>
+      {filteredPosts.length === 0 ? (
+        <div className="h-screen w-full flex items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+          <div className="text-center">
+            <FileCode className="w-20 h-20 text-slate-600 mx-auto mb-4" />
+            <p className="text-slate-400 text-xl">No posts match your filters</p>
+            <button
+              onClick={clearAllFilters}
+              className="mt-4 px-4 py-2 bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 rounded-lg border border-cyan-500/50 transition-colors"
+            >
+              Clear Filters
+            </button>
           </div>
-        ) : (
-          filteredPosts.map((post) => (
-            <PostCard key={post.id} post={post} />
-          ))
-        )}
-      </div>
-    </>
+        </div>
+      ) : (
+        filteredPosts.map((post) => (
+          <PostCard key={post.id} post={post} />
+        ))
+      )}
+    </div>
   );
 }
 

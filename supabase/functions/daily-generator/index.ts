@@ -158,7 +158,7 @@ TOON SYNTAX:
 - Nested objects use indentation (2 spaces)
 - Empty values are represented as empty string between commas
 
-GENERATE 5 TIPS IN THIS EXACT FORMAT:
+GENERATE 3-5 TIPS IN THIS EXACT FORMAT:
 
 TIP[N]{title,summary,problem_solved,upside,downside,risk_level,performance_impact,doc_url,primary_topic,syntax,compatibility_min_version,compatibility_deprecated_in,difficulty}:
 Title here,Summary text,Problem it solves,Benefits,Drawbacks,Low/Medium/High,Performance notes,https://docs.url,Topic,language,version,,Beginner/Intermediate/Advanced

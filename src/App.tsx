@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { FileCode } from 'lucide-react';
 import { postService } from './services/postService';
 import { PostCard } from './components/PostCard';
@@ -10,6 +10,7 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedTopics, setSelectedTopics] = useState<Set<string>>(new Set());
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     loadPosts();
@@ -96,13 +97,14 @@ function App() {
   }
 
   return (
-    <div className="h-screen overflow-y-scroll snap-y snap-mandatory scrollbar-hide bg-slate-950">
+    <div ref={scrollContainerRef} className="h-screen overflow-y-scroll snap-y snap-mandatory scrollbar-hide bg-slate-950">
       {uniqueTopics.length > 0 && (
         <FilterBar
           topics={uniqueTopics}
           selectedTopics={selectedTopics}
           onToggleTopic={toggleTopic}
           onClearAll={clearAllFilters}
+          scrollContainerRef={scrollContainerRef}
         />
       )}
       {filteredPosts.length === 0 ? (

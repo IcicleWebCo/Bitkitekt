@@ -1,10 +1,12 @@
 import { Filter, X } from 'lucide-react';
+import { useState, useEffect, RefObject } from 'react';
 
 interface FilterBarProps {
   topics: string[];
   selectedTopics: Set<string>;
   onToggleTopic: (topic: string) => void;
   onClearAll: () => void;
+  scrollContainerRef: RefObject<HTMLDivElement>;
 }
 
 const topicColors: Record<string, string> = {
@@ -20,11 +22,35 @@ const topicShortNames: Record<string, string> = {
   '.NET 8+': '.NET 8+',
 };
 
-export function FilterBar({ topics, selectedTopics, onToggleTopic, onClearAll }: FilterBarProps) {
+export function FilterBar({ topics, selectedTopics, onToggleTopic, onClearAll, scrollContainerRef }: FilterBarProps) {
   const hasFilters = selectedTopics.size > 0;
+  const [isVisible, setIsVisible] = useState(true);
+  const [lastScrollY, setLastScrollY] = useState(0);
+
+  useEffect(() => {
+    const scrollContainer = scrollContainerRef.current;
+    if (!scrollContainer) return;
+
+    const handleScroll = () => {
+      const currentScrollY = scrollContainer.scrollTop;
+
+      if (currentScrollY < 10) {
+        setIsVisible(true);
+      } else if (currentScrollY > lastScrollY) {
+        setIsVisible(false);
+      } else {
+        setIsVisible(true);
+      }
+
+      setLastScrollY(currentScrollY);
+    };
+
+    scrollContainer.addEventListener('scroll', handleScroll, { passive: true });
+    return () => scrollContainer.removeEventListener('scroll', handleScroll);
+  }, [lastScrollY, scrollContainerRef]);
 
   return (
-    <div className="w-full bg-slate-950/80 backdrop-blur-xl border-b border-slate-700/30 shadow-2xl">
+    <div className={`sticky top-0 z-50 w-full bg-slate-950/80 backdrop-blur-xl border-b border-slate-700/30 shadow-2xl transition-transform duration-300 ${isVisible ? 'translate-y-0' : '-translate-y-full'}`}>
       <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 py-3 md:py-4">
         <div className="flex items-center gap-2 md:gap-3">
           <div className="flex items-center gap-2 flex-shrink-0">

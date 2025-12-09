@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
-import { FileCode, LogOut, User as UserIcon, ArrowLeft } from 'lucide-react';
+import { FileCode, LogOut, User as UserIcon, ArrowLeft, Menu, X } from 'lucide-react';
 import { supabase } from './lib/supabase';
 import { postService } from './services/postService';
 import { PostCard } from './components/PostCard';
@@ -28,6 +28,7 @@ function App() {
   const [emailConfirmation, setEmailConfirmation] = useState<ConfirmationState>(null);
   const [showProfile, setShowProfile] = useState(false);
   const [selectedPost, setSelectedPost] = useState<Post | null>(null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -189,10 +190,11 @@ function App() {
               className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-lg transition-colors"
             >
               <ArrowLeft className="w-4 h-4" />
-              Back to List
+              <span className="hidden sm:inline">Back to List</span>
+              <span className="sm:hidden">Back</span>
             </button>
 
-            <div className="flex items-center gap-3">
+            <div className="hidden md:flex items-center gap-3">
               <div className="flex items-center gap-2">
                 <div className="w-8 h-8 bg-cyan-500/20 rounded-full flex items-center justify-center">
                   <UserIcon className="w-4 h-4 text-cyan-400" />
@@ -213,6 +215,54 @@ function App() {
                 <LogOut className="w-4 h-4" />
                 Sign Out
               </button>
+            </div>
+
+            <div className="md:hidden relative">
+              <button
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                className="p-2 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-lg transition-colors"
+              >
+                {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+              </button>
+
+              {mobileMenuOpen && (
+                <>
+                  <div
+                    className="fixed inset-0 bg-black/20 z-40"
+                    onClick={() => setMobileMenuOpen(false)}
+                  />
+                  <div className="absolute right-0 top-12 w-56 bg-slate-800 border border-slate-700 rounded-lg shadow-xl overflow-hidden z-50">
+                    <div className="p-3 border-b border-slate-700">
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 bg-cyan-500/20 rounded-full flex items-center justify-center">
+                          <UserIcon className="w-4 h-4 text-cyan-400" />
+                        </div>
+                        <span className="text-sm font-medium text-white">{profile?.username}</span>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => {
+                        setShowProfile(true);
+                        setMobileMenuOpen(false);
+                      }}
+                      className="w-full flex items-center gap-2 px-4 py-3 text-slate-300 hover:bg-slate-700 hover:text-white transition-colors text-left"
+                    >
+                      <UserIcon className="w-4 h-4" />
+                      Profile
+                    </button>
+                    <button
+                      onClick={() => {
+                        signOut();
+                        setMobileMenuOpen(false);
+                      }}
+                      className="w-full flex items-center gap-2 px-4 py-3 text-slate-300 hover:bg-slate-700 hover:text-white transition-colors text-left border-t border-slate-700"
+                    >
+                      <LogOut className="w-4 h-4" />
+                      Sign Out
+                    </button>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -238,7 +288,7 @@ function App() {
   return (
     <>
       <div className="fixed top-0 right-0 z-[60] p-4">
-        <div className="flex items-center gap-3 bg-slate-900/80 backdrop-blur-xl border border-slate-700/50 rounded-lg px-4 py-2 shadow-xl">
+        <div className="hidden md:flex items-center gap-3 bg-slate-900/80 backdrop-blur-xl border border-slate-700/50 rounded-lg px-4 py-2 shadow-xl">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 bg-cyan-500/20 rounded-full flex items-center justify-center">
               <UserIcon className="w-4 h-4 text-cyan-400" />
@@ -259,6 +309,54 @@ function App() {
             <LogOut className="w-4 h-4" />
             Sign Out
           </button>
+        </div>
+
+        <div className="md:hidden relative">
+          <button
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="p-2.5 bg-slate-900/80 backdrop-blur-xl border border-slate-700/50 rounded-lg shadow-xl text-slate-300 hover:text-white transition-colors"
+          >
+            {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+          </button>
+
+          {mobileMenuOpen && (
+            <>
+              <div
+                className="fixed inset-0 bg-black/20 z-40"
+                onClick={() => setMobileMenuOpen(false)}
+              />
+              <div className="absolute right-0 top-12 w-56 bg-slate-800 border border-slate-700 rounded-lg shadow-xl overflow-hidden z-50">
+                <div className="p-3 border-b border-slate-700">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 bg-cyan-500/20 rounded-full flex items-center justify-center">
+                      <UserIcon className="w-4 h-4 text-cyan-400" />
+                    </div>
+                    <span className="text-sm font-medium text-white">{profile?.username}</span>
+                  </div>
+                </div>
+                <button
+                  onClick={() => {
+                    setShowProfile(true);
+                    setMobileMenuOpen(false);
+                  }}
+                  className="w-full flex items-center gap-2 px-4 py-3 text-slate-300 hover:bg-slate-700 hover:text-white transition-colors text-left"
+                >
+                  <UserIcon className="w-4 h-4" />
+                  Profile
+                </button>
+                <button
+                  onClick={() => {
+                    signOut();
+                    setMobileMenuOpen(false);
+                  }}
+                  className="w-full flex items-center gap-2 px-4 py-3 text-slate-300 hover:bg-slate-700 hover:text-white transition-colors text-left border-t border-slate-700"
+                >
+                  <LogOut className="w-4 h-4" />
+                  Sign Out
+                </button>
+              </div>
+            </>
+          )}
         </div>
       </div>
 

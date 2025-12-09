@@ -190,7 +190,7 @@ function App() {
 
   return (
     <>
-      <div className="fixed top-0 right-0 z-50 p-4">
+      <div className="fixed top-0 right-0 z-[60] p-4">
         <div className="flex items-center gap-3 bg-slate-900/80 backdrop-blur-xl border border-slate-700/50 rounded-lg px-4 py-2 shadow-xl">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 bg-cyan-500/20 rounded-full flex items-center justify-center">

@@ -105,7 +105,7 @@ function App() {
           onClearAll={clearAllFilters}
         />
       )}
-      <div className="h-screen overflow-y-scroll snap-y snap-mandatory scrollbar-hide bg-slate-950 pt-16 md:pt-20">
+      <div className="h-screen overflow-y-scroll snap-y snap-mandatory scrollbar-hide bg-slate-950 pt-28 md:pt-32">
         {filteredPosts.length === 0 ? (
           <div className="h-screen w-full flex items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
             <div className="text-center">

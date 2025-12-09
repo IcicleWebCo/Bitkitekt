@@ -59,10 +59,7 @@ export function FilterBar({ topics, selectedTopics, onToggleTopic, onClearAll }:
               return (
                 <button
                   key={topic}
-                  onClick={() => {
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                    onToggleTopic(topic);
-                  }}
+                  onClick={() => onToggleTopic(topic)}
                   className={`
                     group relative overflow-hidden rounded-full transition-all duration-300 ease-out
                     ${isSelected
@@ -100,10 +97,7 @@ export function FilterBar({ topics, selectedTopics, onToggleTopic, onClearAll }:
 
           {hasFilters && !isCollapsed && (
             <button
-              onClick={() => {
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-                onClearAll();
-              }}
+              onClick={onClearAll}
               className="flex-shrink-0 flex items-center gap-1 md:gap-1.5 px-2 md:px-3 py-1 md:py-1.5 rounded-full bg-slate-700/50 hover:bg-slate-700 text-slate-300 hover:text-white transition-all duration-200 border border-slate-600/50"
             >
               <X className="w-3 h-3 md:w-4 md:h-4" />

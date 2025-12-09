@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { ExternalLink, AlertTriangle, TrendingUp, TrendingDown, Code2, Package, Tag, Calendar, ChevronDown, ChevronUp } from 'lucide-react';
 import { CommentSection } from './CommentSection';
 import type { Post } from '../types/database';
@@ -11,10 +11,23 @@ const riskColors = {
 
 interface PostCardDetailProps {
   post: Post;
+  scrollToComments?: boolean;
 }
 
-export function PostCardDetail({ post }: PostCardDetailProps) {
+export function PostCardDetail({ post, scrollToComments }: PostCardDetailProps) {
   const [expandedSnippets, setExpandedSnippets] = useState<Set<number>>(new Set());
+  const commentSectionRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (scrollToComments && commentSectionRef.current) {
+      setTimeout(() => {
+        commentSectionRef.current?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start'
+        });
+      }, 100);
+    }
+  }, [scrollToComments]);
 
   const toggleSnippet = (idx: number) => {
     setExpandedSnippets(prev => {
@@ -219,7 +232,9 @@ export function PostCardDetail({ post }: PostCardDetailProps) {
             )}
           </div>
 
-          <CommentSection postId={post.id} />
+          <div ref={commentSectionRef}>
+            <CommentSection postId={post.id} />
+          </div>
 
         </article>
       </div>

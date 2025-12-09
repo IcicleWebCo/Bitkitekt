@@ -11,10 +11,11 @@ const riskColors = {
 interface PostCardProps {
   post: Post;
   onViewDetail?: () => void;
+  onViewComments?: () => void;
   commentCount?: number;
 }
 
-export function PostCard({ post, onViewDetail, commentCount }: PostCardProps) {
+export function PostCard({ post, onViewDetail, onViewComments, commentCount }: PostCardProps) {
   const [expandedSnippets, setExpandedSnippets] = useState<Set<number>>(new Set());
 
   const toggleSnippet = (idx: number) => {
@@ -65,9 +66,9 @@ export function PostCard({ post, onViewDetail, commentCount }: PostCardProps) {
                 </div>
               )}
 
-              {commentCount !== undefined && commentCount > 0 && onViewDetail && (
+              {commentCount !== undefined && commentCount > 0 && onViewComments && (
                 <button
-                  onClick={onViewDetail}
+                  onClick={onViewComments}
                   className="inline-flex items-center gap-1 sm:gap-1.5 bg-slate-700/50 hover:bg-slate-700/80 text-slate-300 hover:text-white px-2 sm:px-3 py-1 rounded-md border border-slate-600/50 hover:border-slate-500/50 transition-all cursor-pointer"
                   title="View comments"
                 >

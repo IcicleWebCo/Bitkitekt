@@ -29,6 +29,7 @@ function App() {
   const [emailConfirmation, setEmailConfirmation] = useState<ConfirmationState>(null);
   const [showProfile, setShowProfile] = useState(false);
   const [selectedPost, setSelectedPost] = useState<Post | null>(null);
+  const [scrollToComments, setScrollToComments] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [commentCounts, setCommentCounts] = useState<Map<string, number>>(new Map());
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -201,7 +202,10 @@ function App() {
         <div className="fixed top-0 left-0 right-0 z-[60] bg-slate-900/80 backdrop-blur-xl border-b border-slate-700/50 shadow-xl">
           <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
             <button
-              onClick={() => setSelectedPost(null)}
+              onClick={() => {
+                setSelectedPost(null);
+                setScrollToComments(false);
+              }}
               className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-lg transition-colors"
             >
               <ArrowLeft className="w-4 h-4" />
@@ -283,7 +287,7 @@ function App() {
         </div>
 
         <div className="overflow-y-auto">
-          <PostCardDetail post={selectedPost} />
+          <PostCardDetail post={selectedPost} scrollToComments={scrollToComments} />
         </div>
       </div>
     );
@@ -402,7 +406,14 @@ function App() {
             <PostCard
               key={post.id}
               post={post}
-              onViewDetail={() => setSelectedPost(post)}
+              onViewDetail={() => {
+                setScrollToComments(false);
+                setSelectedPost(post);
+              }}
+              onViewComments={() => {
+                setScrollToComments(true);
+                setSelectedPost(post);
+              }}
               commentCount={commentCounts.get(post.id)}
             />
           ))

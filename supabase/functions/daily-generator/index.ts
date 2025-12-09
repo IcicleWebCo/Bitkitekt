@@ -1,7 +1,6 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2.57.4";
 import Anthropic from "npm:@anthropic-ai/sdk";
-import { decode } from "npm:@toon-format/toon@2.0.0";
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
@@ -150,35 +149,30 @@ Deno.serve(async (req)=>{
         while(inserted_count < 5 && attempts < maxAttempts){
           attempts++;
           console.log("Attempt", attempts, "Need", 5 - inserted_count, "more posts");
-          const systemPrompt = `You are a technical content generator. Generate coding tips in TOON format (Token-Oriented Object Notation) - a compact, indented format.
+          const systemPrompt = `You are a technical content generator. Generate 3-5 coding tips in JSON format.
 
-TOON SYNTAX:
-- Arrays use brackets with field names: TIP[3]{field1,field2}:
-- Each row is one item with comma-separated values
-- Nested objects use indentation (2 spaces)
-- Empty values are represented as empty string between commas
-
-GENERATE 3-5 TIPS IN THIS EXACT FORMAT:
-
-TIP[N]{title,summary,problem_solved,upside,downside,risk_level,performance_impact,doc_url,primary_topic,syntax,compatibility_min_version,compatibility_deprecated_in,difficulty}:
-Title here,Summary text,Problem it solves,Benefits,Drawbacks,Low/Medium/High,Performance notes,https://docs.url,Topic,language,version,,Beginner/Intermediate/Advanced
-  code_snippets[M]{label,language,content}:
-  Example Name,javascript,const x = 1;
-  dependencies[K]:
-  dep1,dep2
-  tags[J]:
-  tag1,tag2,tag3
-
-IMPORTANT:
-- All text must be on ONE line (no line breaks in strings)
-- Use proper comma separation
-- Empty fields should be represented as blank (two commas with nothing between)
-- Arrays like dependencies and tags are nested with proper indentation
+Return a JSON object with a "tips" array containing tip objects with these fields:
+- title: string (clear, concise title)
+- summary: string (brief description)
+- problem_solved: string (what problem this solves)
+- upside: string (benefits and advantages)
+- downside: string (drawbacks or limitations)
+- risk_level: string ("Low", "Medium", or "High")
+- performance_impact: string (performance considerations)
+- doc_url: string (documentation URL if available)
+- primary_topic: string (main technology/concept)
+- syntax: string (programming language)
+- code_snippets: array of objects with {label: string, language: string, content: string}
+- dependencies: array of strings (required dependencies)
+- compatibility_min_version: string (minimum version required)
+- compatibility_deprecated_in: string (version deprecated in, if applicable)
+- tags: array of strings (relevant tags)
+- difficulty: string ("Beginner", "Intermediate", or "Advanced")
 
 DO NOT generate topics similar to:
 ${ignoreContextText}
 
-Return ONLY the TOON content, no markdown blocks or extra text.`;
+Return ONLY valid JSON, no markdown code blocks or extra text.`;
           try {
             const message = await anthropic.messages.create({
               model: "claude-sonnet-4-20250514",
@@ -196,12 +190,12 @@ Return ONLY the TOON content, no markdown blocks or extra text.`;
             console.log("Claude response preview:", responseText.substring(0, 150));
             let generatedTips;
             try {
-              const toonMatch = responseText.match(/```(?:toon)?\s*([\s\S]*?)```/);
-              const toonText = toonMatch ? toonMatch[1] : responseText;
-              console.log("TOON text to parse:", toonText.substring(0, 300));
-              const parsed = decode(toonText.trim());
+              const jsonMatch = responseText.match(/```(?:json)?\s*([\s\S]*?)```/);
+              const jsonText = jsonMatch ? jsonMatch[1] : responseText;
+              console.log("JSON text to parse:", jsonText.substring(0, 300));
+              const parsed = JSON.parse(jsonText.trim());
               console.log("Parsed result:", JSON.stringify(parsed).substring(0, 500));
-              generatedTips = parsed.TIP || [];
+              generatedTips = parsed.tips || [];
               console.log("Tips extracted:", generatedTips.length);
             } catch (parseError) {
               console.error("Parse error:", parseError);
@@ -209,7 +203,7 @@ Return ONLY the TOON content, no markdown blocks or extra text.`;
               continue;
             }
             if (!Array.isArray(generatedTips)) {
-              console.error("Failed to parse tips from TOON");
+              console.error("Failed to parse tips from JSON");
               continue;
             }
             console.log("Generated tips:", generatedTips.length);

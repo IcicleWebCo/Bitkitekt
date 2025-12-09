@@ -27,7 +27,7 @@ export function PostCard({ post }: PostCardProps) {
     });
   };
   return (
-    <div className="min-h-screen w-full snap-start flex items-center justify-center p-3 sm:p-4 md:p-8 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 relative">
+    <div className="min-h-screen w-full snap-start flex items-center justify-center p-3 sm:p-4 md:p-8 pt-20 sm:pt-24 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 relative">
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-cyan-900/20 via-transparent to-transparent" />
 
       <div className="max-w-5xl w-full relative z-10">

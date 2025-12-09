@@ -12,9 +12,10 @@ const riskColors = {
 interface PostCardDetailProps {
   post: Post;
   scrollToComments?: boolean;
+  onSignIn?: () => void;
 }
 
-export function PostCardDetail({ post, scrollToComments }: PostCardDetailProps) {
+export function PostCardDetail({ post, scrollToComments, onSignIn }: PostCardDetailProps) {
   const [expandedSnippets, setExpandedSnippets] = useState<Set<number>>(new Set());
   const commentSectionRef = useRef<HTMLDivElement>(null);
 
@@ -233,7 +234,7 @@ export function PostCardDetail({ post, scrollToComments }: PostCardDetailProps) 
           </div>
 
           <div ref={commentSectionRef}>
-            <CommentSection postId={post.id} />
+            <CommentSection postId={post.id} onSignIn={onSignIn} />
           </div>
 
         </article>

@@ -8,9 +8,10 @@ import type { CommentWithProfile } from '../types/database';
 
 interface CommentSectionProps {
   postId: string;
+  onSignIn?: () => void;
 }
 
-export function CommentSection({ postId }: CommentSectionProps) {
+export function CommentSection({ postId, onSignIn }: CommentSectionProps) {
   const { user } = useAuth();
   const [comments, setComments] = useState<CommentWithProfile[]>([]);
   const [loading, setLoading] = useState(true);
@@ -102,9 +103,17 @@ export function CommentSection({ postId }: CommentSectionProps) {
         ) : (
           <div className="bg-slate-800/30 rounded-lg p-6 border border-slate-700/50 text-center">
             <Lock className="w-8 h-8 text-slate-500 mx-auto mb-3" />
-            <p className="text-slate-400 text-sm">
-              Please log in to join the discussion
+            <p className="text-slate-400 text-sm mb-4">
+              Please sign in to join the discussion
             </p>
+            {onSignIn && (
+              <button
+                onClick={onSignIn}
+                className="px-4 py-2 bg-cyan-500 hover:bg-cyan-600 text-white rounded-lg transition-colors font-medium"
+              >
+                Sign In
+              </button>
+            )}
           </div>
         )}
 

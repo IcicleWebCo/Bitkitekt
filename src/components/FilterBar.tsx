@@ -30,12 +30,14 @@ export function FilterBar({ topics, selectedTopics, onToggleTopic, onClearAll, s
     <div className="fixed top-0 left-0 right-0 z-50 bg-slate-950/80 backdrop-blur-xl border-b border-slate-700/30 shadow-2xl transition-all duration-300">
       <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 py-3 md:py-4">
         <div className="flex items-center gap-2 md:gap-3">
-          {savingPreferences && (
-            <div className="flex items-center gap-1.5 px-2 py-1 bg-cyan-500/10 border border-cyan-500/30 rounded-md">
-              <div className="w-3 h-3 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin" />
-              <span className="text-xs text-cyan-400 hidden sm:inline">Saving...</span>
-            </div>
-          )}
+          <div className={`
+            flex items-center gap-1.5 px-2 py-1 bg-cyan-500/10 border border-cyan-500/30 rounded-md
+            transition-opacity duration-200
+            ${savingPreferences ? 'opacity-100' : 'opacity-0 pointer-events-none'}
+          `}>
+            <div className="w-3 h-3 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin" />
+            <span className="text-xs text-cyan-400 hidden sm:inline">Saving...</span>
+          </div>
           <button
             onClick={() => setIsCollapsed(!isCollapsed)}
             className="flex-shrink-0 flex items-center gap-2 px-2 md:px-3 py-1.5 rounded-lg bg-slate-800/50 hover:bg-slate-800 transition-all duration-200 border border-slate-700/50"
@@ -47,7 +49,7 @@ export function FilterBar({ topics, selectedTopics, onToggleTopic, onClearAll, s
               <ChevronUp className="w-4 h-4 text-slate-400" />
             )}
             {hasFilters && (
-              <span className="text-xs md:text-sm font-medium text-cyan-400">
+              <span className="text-xs md:text-sm font-medium text-cyan-400 transition-opacity duration-200">
                 ({selectedTopics.size})
               </span>
             )}

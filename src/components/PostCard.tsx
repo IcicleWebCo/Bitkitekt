@@ -153,24 +153,7 @@ export function PostCard({ post, onViewDetail }: PostCardProps) {
             )}
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
-              {(post.performance_impact || post.compatibility_deprecated_in) && (
-                <section>
-                  <div className="flex flex-wrap items-center gap-2 md:gap-4 mb-2 md:mb-3">
-                    {post.performance_impact && (
-                      <h2 className="text-base md:text-lg font-semibold text-sky-400">Performance Impact</h2>
-                    )}
-                    {post.compatibility_deprecated_in && (
-                      <div className="flex items-center gap-1.5 md:gap-2 text-xs md:text-sm">
-                        <span className="text-slate-400">Deprecated:</span>
-                        <span className="text-orange-400 font-mono">{post.compatibility_deprecated_in}</span>
-                      </div>
-                    )}
-                  </div>
-                  {post.performance_impact && (
-                    <p className="text-xs md:text-sm text-slate-300 leading-relaxed">{post.performance_impact}</p>
-                  )}
-                </section>
-              )}
+
 
               {post.tags && post.tags.length > 0 && (
                 <section>

@@ -88,11 +88,13 @@ export function FilterBar({ topics, selectedTopics, onToggleTopic, onClearAll }:
           )}
         </div>
 
-        {hasFilters && (
-          <div className="mt-2 text-xs md:text-sm text-slate-400">
-            Showing {selectedTopics.size} {selectedTopics.size === 1 ? 'filter' : 'filters'}
-          </div>
-        )}
+        <div className={`mt-2 text-xs md:text-sm text-slate-400 transition-opacity duration-200 ${hasFilters ? 'opacity-100' : 'opacity-0'}`}>
+          {hasFilters ? (
+            <>Showing {selectedTopics.size} {selectedTopics.size === 1 ? 'filter' : 'filters'}</>
+          ) : (
+            <>&nbsp;</>
+          )}
+        </div>
       </div>
     </div>
   );

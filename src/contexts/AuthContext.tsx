@@ -6,6 +6,7 @@ interface Profile {
   id: string;
   username: string;
   email: string;
+  filter_preferences: string[];
   created_at: string;
   updated_at: string;
 }

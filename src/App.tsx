@@ -1,8 +1,9 @@
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { FileCode, LogOut, User as UserIcon, ArrowLeft, Menu, X } from 'lucide-react';
 import { supabase } from './lib/supabase';
 import { postService } from './services/postService';
 import { commentService } from './services/commentService';
+import { saveFilterPreferences } from './services/userPreferencesService';
 import { PostCard } from './components/PostCard';
 import { PostCardDetail } from './components/PostCardDetail';
 import { FilterBar } from './components/FilterBar';
@@ -32,7 +33,10 @@ function App() {
   const [scrollToComments, setScrollToComments] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [commentCounts, setCommentCounts] = useState<Map<string, number>>(new Map());
+  const [preferencesLoaded, setPreferencesLoaded] = useState(false);
+  const [savingPreferences, setSavingPreferences] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     loadPosts();
@@ -56,12 +60,48 @@ function App() {
           if (isPasswordRecovery) {
             setIsPasswordRecovery(false);
           }
+        } else if (event === 'SIGNED_OUT') {
+          setPreferencesLoaded(false);
+          setSelectedTopics(new Set());
         }
       })();
     });
 
     return () => subscription.unsubscribe();
   }, [isPasswordRecovery]);
+
+  useEffect(() => {
+    if (profile && !preferencesLoaded) {
+      const preferences = profile.filter_preferences || [];
+      setSelectedTopics(new Set(preferences));
+      setPreferencesLoaded(true);
+    }
+  }, [profile, preferencesLoaded]);
+
+  useEffect(() => {
+    if (!user || !preferencesLoaded) return;
+
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
+
+    saveTimeoutRef.current = setTimeout(async () => {
+      try {
+        setSavingPreferences(true);
+        await saveFilterPreferences(user.id, Array.from(selectedTopics));
+      } catch (err) {
+        console.error('Failed to save filter preferences:', err);
+      } finally {
+        setSavingPreferences(false);
+      }
+    }, 1000);
+
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+    };
+  }, [selectedTopics, user, preferencesLoaded]);
 
   const loadPosts = async () => {
     try {
@@ -385,6 +425,7 @@ function App() {
           selectedTopics={selectedTopics}
           onToggleTopic={toggleTopic}
           onClearAll={clearAllFilters}
+          savingPreferences={savingPreferences}
         />
       )}
       <div ref={scrollContainerRef} className="h-screen overflow-y-scroll snap-y snap-mandatory scrollbar-hide bg-slate-950 pt-36 md:pt-36">

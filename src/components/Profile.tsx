@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { User as UserIcon, Mail, Calendar, ArrowLeft, Edit2, Save, X } from 'lucide-react';
+import { User as UserIcon, Mail, Calendar, ArrowLeft, Edit2, Save, X, Filter, Trash2 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
+import { clearFilterPreferences } from '../services/userPreferencesService';
 
 interface ProfileProps {
   onBack: () => void;
@@ -14,6 +15,7 @@ export function Profile({ onBack }: ProfileProps) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [clearingPreferences, setClearingPreferences] = useState(false);
 
   const handleSave = async () => {
     if (!user || !profile) return;
@@ -43,6 +45,23 @@ export function Profile({ onBack }: ProfileProps) {
     setUsername(profile?.username || '');
     setIsEditing(false);
     setError(null);
+  };
+
+  const handleClearPreferences = async () => {
+    if (!user) return;
+
+    setError(null);
+    setClearingPreferences(true);
+
+    try {
+      await clearFilterPreferences(user.id);
+      setSuccess(true);
+      setTimeout(() => setSuccess(false), 3000);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to clear preferences');
+    } finally {
+      setClearingPreferences(false);
+    }
   };
 
   if (!profile) {
@@ -143,6 +162,50 @@ export function Profile({ onBack }: ProfileProps) {
                     day: 'numeric'
                   })}
                 </p>
+              </div>
+
+              <div className="bg-slate-900/50 rounded-xl p-6 border border-slate-700/30">
+                <div className="flex items-center justify-between mb-4">
+                  <label className="flex items-center gap-2 text-sm font-medium text-slate-400">
+                    <Filter className="w-4 h-4" />
+                    Saved Filter Preferences
+                  </label>
+                  {profile.filter_preferences && profile.filter_preferences.length > 0 && (
+                    <button
+                      onClick={handleClearPreferences}
+                      disabled={clearingPreferences}
+                      className="flex items-center gap-1.5 px-3 py-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-md transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed border border-red-500/30"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      Clear All
+                    </button>
+                  )}
+                </div>
+                {profile.filter_preferences && profile.filter_preferences.length > 0 ? (
+                  <div className="flex flex-wrap gap-2">
+                    {profile.filter_preferences.map((topic) => (
+                      <span
+                        key={topic}
+                        className="px-3 py-1.5 bg-gradient-to-r from-cyan-500/20 to-blue-500/20 border border-cyan-500/30 text-cyan-300 rounded-full text-sm font-medium"
+                      >
+                        {topic}
+                      </span>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-slate-500 text-sm">No saved filter preferences. Select topics from the main page to save them automatically.</p>
+                )}
+                {profile.filter_preferences && profile.filter_preferences.length > 0 && (
+                  <p className="text-slate-500 text-xs mt-3">
+                    Last updated: {new Date(profile.updated_at).toLocaleDateString('en-US', {
+                      year: 'numeric',
+                      month: 'short',
+                      day: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit'
+                    })}
+                  </p>
+                )}
               </div>
             </div>
 

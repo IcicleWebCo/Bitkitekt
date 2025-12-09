@@ -1,140 +1,12 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2.57.4";
 import Anthropic from "npm:@anthropic-ai/sdk";
-
+import { decode } from "npm:@toon-format/toon@2.0.0";
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey"
 };
-
-function parseTOON(text) {
-  const tips = [];
-  const tipBlocks = text.split(/^@TIP$/m).filter((block)=>block.trim());
-  for (const block of tipBlocks){
-    const tip = {
-      code_snippets: [],
-      dependencies: [],
-      tags: []
-    };
-    const lines = block.split('\n');
-    let currentKey = '';
-    let currentValue = '';
-    let inMultiline = false;
-    let inCodeSnippet = false;
-    let currentCodeSnippet = {};
-    let inArray = false;
-    let arrayKey = '';
-    let arrayValues = [];
-    for(let i = 0; i < lines.length; i++){
-      const line = lines[i];
-      if (line.trim() === '') continue;
-      if (line.startsWith('@CODE_SNIPPET')) {
-        if (currentKey && currentValue) {
-          tip[currentKey] = currentValue.trim();
-          currentKey = '';
-          currentValue = '';
-        }
-        inCodeSnippet = true;
-        currentCodeSnippet = {};
-        continue;
-      }
-      if (line.startsWith('@END_CODE_SNIPPET')) {
-        if (Object.keys(currentCodeSnippet).length > 0) {
-          tip.code_snippets.push(currentCodeSnippet);
-        }
-        inCodeSnippet = false;
-        currentCodeSnippet = {};
-        continue;
-      }
-      if (line.startsWith('@ARRAY ')) {
-        if (currentKey && currentValue) {
-          tip[currentKey] = currentValue.trim();
-          currentKey = '';
-          currentValue = '';
-        }
-        inArray = true;
-        arrayKey = line.substring(7).trim();
-        arrayValues = [];
-        continue;
-      }
-      if (line.startsWith('@END_ARRAY')) {
-        if (inArray && arrayKey) {
-          tip[arrayKey] = arrayValues;
-        }
-        inArray = false;
-        arrayKey = '';
-        arrayValues = [];
-        continue;
-      }
-      if (inArray) {
-        const itemMatch = line.match(/^\s*-\s*(.+)$/);
-        if (itemMatch) {
-          arrayValues.push(itemMatch[1].trim());
-        }
-        continue;
-      }
-      const keyMatch = line.match(/^([a-z_]+):\s*(.*)$/);
-      if (keyMatch) {
-        if (currentKey && currentValue) {
-          if (inCodeSnippet) {
-            currentCodeSnippet[currentKey] = currentValue.trim();
-          } else {
-            tip[currentKey] = currentValue.trim();
-          }
-        }
-        currentKey = keyMatch[1];
-        currentValue = keyMatch[2];
-        if (currentValue.startsWith('<<<')) {
-          inMultiline = true;
-          currentValue = '';
-        } else if (currentValue) {
-          if (inCodeSnippet) {
-            currentCodeSnippet[currentKey] = currentValue.trim();
-            currentKey = '';
-            currentValue = '';
-          }
-        }
-        continue;
-      }
-      if (line.trim() === '>>>') {
-        inMultiline = false;
-        if (currentKey) {
-          if (inCodeSnippet) {
-            currentCodeSnippet[currentKey] = currentValue.trim();
-          } else {
-            tip[currentKey] = currentValue.trim();
-          }
-          currentKey = '';
-          currentValue = '';
-        }
-        continue;
-      }
-      if (inMultiline || currentValue.endsWith('<<<')) {
-        if (currentValue.endsWith('<<<')) {
-          currentValue = currentValue.slice(0, -3).trim();
-          inMultiline = true;
-        }
-        currentValue += (currentValue ? '\n' : '') + line;
-      }
-    }
-    if (currentKey && currentValue) {
-      if (inCodeSnippet) {
-        currentCodeSnippet[currentKey] = currentValue.trim();
-      } else {
-        tip[currentKey] = currentValue.trim();
-      }
-    }
-    if (Object.keys(currentCodeSnippet).length > 0) {
-      tip.code_snippets.push(currentCodeSnippet);
-    }
-    if (tip.title) {
-      tips.push(tip);
-    }
-  }
-  return tips;
-}
-
 function levenshteinDistance(str1, str2) {
   const s1 = str1.toLowerCase();
   const s2 = str2.toLowerCase();
@@ -278,7 +150,35 @@ Deno.serve(async (req)=>{
         while(inserted_count < 5 && attempts < maxAttempts){
           attempts++;
           console.log("Attempt", attempts, "Need", 5 - inserted_count, "more posts");
-          const systemPrompt = "You are a technical content generator. Your task is to generate coding tips/patterns in TOON (Token-Oriented Object Notation) format based on the user's prompt.\n\nIMPORTANT RULES:\n1. Return ONLY valid TOON with 3-5 tips\n2. Use @TIP to start each tip block\n3. Simple fields use: key: value\n4. Multiline text uses: key: <<<\n  content\n  more content\n>>>\n5. Arrays use:\n@ARRAY key_name\n- item1\n- item2\n@END_ARRAY\n6. Code snippets use:\n@CODE_SNIPPET\nlabel: Example\nlanguage: javascript\ncontent: <<<\ncode here\n>>>\n@END_CODE_SNIPPET\n\nEXAMPLE TOON FORMAT:\n\n@TIP\ntitle: Using Array.prototype.reduce() for Complex Aggregations\nsummary: Learn how to leverage reduce for powerful data transformations\nproblem_solved: Simplifies complex array transformations into single operations\nupside: More functional, chainable, and readable than imperative loops\ndownside: Can be harder to debug and may have performance overhead\nrisk_level: Low\nperformance_impact: Slightly slower than for loops for simple cases\ndoc_url: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/reduce\nprimary_topic: JavaScript\nsyntax: javascript\ncompatibility_min_version: ES5\ncompatibility_deprecated_in: \ndifficulty: Intermediate\n@ARRAY dependencies\n@END_ARRAY\n@ARRAY tags\n- functional-programming\n- arrays\n- reduce\n@END_ARRAY\n@CODE_SNIPPET\nlabel: Basic Example\nlanguage: javascript\ncontent: <<<\nconst numbers = [1, 2, 3, 4, 5];\nconst sum = numbers.reduce((acc, num) => acc + num, 0);\nconsole.log(sum); // 15\n>>>\n@END_CODE_SNIPPET\n\nDO NOT generate topics similar to these existing ones:\n" + ignoreContextText + "\n\nBe creative and diverse. Focus on different aspects, patterns, or technologies.\nReturn ONLY the TOON content, no additional text or markdown code blocks.";
+          const systemPrompt = `You are a technical content generator. Generate coding tips in TOON format (Token-Oriented Object Notation) - a compact, indented format.
+
+TOON SYNTAX:
+- Arrays use brackets with field names: TIP[3]{field1,field2}:
+- Each row is one item with comma-separated values
+- Nested objects use indentation (2 spaces)
+- Empty values are represented as empty string between commas
+
+GENERATE 3-5 TIPS IN THIS EXACT FORMAT:
+
+TIP[N]{title,summary,problem_solved,upside,downside,risk_level,performance_impact,doc_url,primary_topic,syntax,compatibility_min_version,compatibility_deprecated_in,difficulty}:
+Title here,Summary text,Problem it solves,Benefits,Drawbacks,Low/Medium/High,Performance notes,https://docs.url,Topic,language,version,,Beginner/Intermediate/Advanced
+  code_snippets[M]{label,language,content}:
+  Example Name,javascript,const x = 1;
+  dependencies[K]:
+  dep1,dep2
+  tags[J]:
+  tag1,tag2,tag3
+
+IMPORTANT:
+- All text must be on ONE line (no line breaks in strings)
+- Use proper comma separation
+- Empty fields should be represented as blank (two commas with nothing between)
+- Arrays like dependencies and tags are nested with proper indentation
+
+DO NOT generate topics similar to:
+${ignoreContextText}
+
+Return ONLY the TOON content, no markdown blocks or extra text.`;
           try {
             const message = await anthropic.messages.create({
               model: "claude-sonnet-4-20250514",
@@ -299,11 +199,10 @@ Deno.serve(async (req)=>{
               const toonMatch = responseText.match(/```(?:toon)?\s*([\s\S]*?)```/);
               const toonText = toonMatch ? toonMatch[1] : responseText;
               console.log("TOON text to parse:", toonText.substring(0, 300));
-              generatedTips = parseTOON(toonText.trim());
-              console.log("Parsed tips count:", generatedTips.length);
-              if (generatedTips.length > 0) {
-                console.log("First tip title:", generatedTips[0].title);
-              }
+              const parsed = decode(toonText.trim());
+              console.log("Parsed result:", JSON.stringify(parsed).substring(0, 500));
+              generatedTips = parsed.TIP || [];
+              console.log("Tips extracted:", generatedTips.length);
             } catch (parseError) {
               console.error("Parse error:", parseError);
               console.error("Response:", responseText.substring(0, 500));

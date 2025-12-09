@@ -112,11 +112,11 @@ export function FilterBar({ topics, selectedTopics, onToggleTopic, onClearAll }:
           )}
         </div>
 
-        {hasFilters && !isCollapsed && (
+        {/*{hasFilters && !isCollapsed && (
           <div className="mt-2 text-xs md:text-sm text-slate-400">
             Showing {selectedTopics.size} {selectedTopics.size === 1 ? 'filter' : 'filters'}
           </div>
-        )}
+        )}*/}
       </div>
     </div>
   );

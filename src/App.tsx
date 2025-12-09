@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo, useRef } from 'react';
 import { FileCode, LogOut, User as UserIcon, ArrowLeft, Menu, X } from 'lucide-react';
 import { supabase } from './lib/supabase';
 import { postService } from './services/postService';
+import { commentService } from './services/commentService';
 import { PostCard } from './components/PostCard';
 import { PostCardDetail } from './components/PostCardDetail';
 import { FilterBar } from './components/FilterBar';
@@ -29,6 +30,7 @@ function App() {
   const [showProfile, setShowProfile] = useState(false);
   const [selectedPost, setSelectedPost] = useState<Post | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [commentCounts, setCommentCounts] = useState<Map<string, number>>(new Map());
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -66,6 +68,19 @@ function App() {
       const data = await postService.getAllPosts();
       console.log(data);
       setPosts(data);
+
+      const counts = new Map<string, number>();
+      await Promise.all(
+        data.map(async (post) => {
+          try {
+            const count = await commentService.getCommentCount(post.id);
+            counts.set(post.id, count);
+          } catch (err) {
+            console.error(`Failed to load comment count for post ${post.id}:`, err);
+          }
+        })
+      );
+      setCommentCounts(counts);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load posts');
     } finally {
@@ -388,6 +403,7 @@ function App() {
               key={post.id}
               post={post}
               onViewDetail={() => setSelectedPost(post)}
+              commentCount={commentCounts.get(post.id)}
             />
           ))
         )}

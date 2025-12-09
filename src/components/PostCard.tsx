@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ExternalLink, AlertTriangle, TrendingUp, TrendingDown, Code2, Package, Tag, Calendar, ChevronDown, ChevronUp, ArrowRight } from 'lucide-react';
+import { ExternalLink, AlertTriangle, TrendingUp, TrendingDown, Code2, Package, Tag, Calendar, ChevronDown, ChevronUp, ArrowRight, MessageCircle } from 'lucide-react';
 import type { Post } from '../types/database';
 
 const riskColors = {
@@ -11,9 +11,10 @@ const riskColors = {
 interface PostCardProps {
   post: Post;
   onViewDetail?: () => void;
+  commentCount?: number;
 }
 
-export function PostCard({ post, onViewDetail }: PostCardProps) {
+export function PostCard({ post, onViewDetail, commentCount }: PostCardProps) {
   const [expandedSnippets, setExpandedSnippets] = useState<Set<number>>(new Set());
 
   const toggleSnippet = (idx: number) => {
@@ -62,6 +63,17 @@ export function PostCard({ post, onViewDetail }: PostCardProps) {
                 <div className="inline-flex items-center gap-1 sm:gap-1.5 bg-orange-500/10 text-orange-300 px-2 sm:px-3 py-1 rounded-md border border-orange-500/30">
                   <span className="font-medium">{post.difficulty}</span>
                 </div>
+              )}
+
+              {commentCount !== undefined && commentCount > 0 && onViewDetail && (
+                <button
+                  onClick={onViewDetail}
+                  className="inline-flex items-center gap-1 sm:gap-1.5 bg-slate-700/50 hover:bg-slate-700/80 text-slate-300 hover:text-white px-2 sm:px-3 py-1 rounded-md border border-slate-600/50 hover:border-slate-500/50 transition-all cursor-pointer"
+                  title="View comments"
+                >
+                  <MessageCircle className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                  <span className="font-medium">{commentCount}</span>
+                </button>
               )}
 
               {post.compatibility_min_version && (

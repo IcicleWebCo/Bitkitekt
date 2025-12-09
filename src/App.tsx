@@ -1,15 +1,23 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
-import { FileCode } from 'lucide-react';
+import { FileCode, LogOut, User as UserIcon } from 'lucide-react';
 import { postService } from './services/postService';
 import { PostCard } from './components/PostCard';
 import { FilterBar } from './components/FilterBar';
+import { Login } from './components/Login';
+import { Register } from './components/Register';
+import { ForgotPassword } from './components/ForgotPassword';
+import { useAuth } from './contexts/AuthContext';
 import type { Post } from './types/database';
 
+type AuthMode = 'login' | 'register' | 'forgot-password';
+
 function App() {
+  const { user, profile, loading: authLoading, signOut } = useAuth();
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedTopics, setSelectedTopics] = useState<Set<string>>(new Set());
+  const [authMode, setAuthMode] = useState<AuthMode>('login');
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -72,7 +80,7 @@ function App() {
     setSelectedTopics(new Set());
   };
 
-  if (loading) {
+  if (authLoading || loading) {
     return (
       <div className="h-screen w-full flex items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
         <div className="flex flex-col items-center gap-4">
@@ -93,6 +101,25 @@ function App() {
     );
   }
 
+  if (!user) {
+    return (
+      <div className="min-h-screen w-full bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4">
+        {authMode === 'login' && (
+          <Login
+            onToggleMode={() => setAuthMode('register')}
+            onForgotPassword={() => setAuthMode('forgot-password')}
+          />
+        )}
+        {authMode === 'register' && (
+          <Register onToggleMode={() => setAuthMode('login')} />
+        )}
+        {authMode === 'forgot-password' && (
+          <ForgotPassword onBack={() => setAuthMode('login')} />
+        )}
+      </div>
+    );
+  }
+
   if (posts.length === 0) {
     return (
       <div className="h-screen w-full flex items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
@@ -106,6 +133,24 @@ function App() {
 
   return (
     <>
+      <div className="fixed top-0 right-0 z-50 p-4">
+        <div className="flex items-center gap-3 bg-slate-900/80 backdrop-blur-xl border border-slate-700/50 rounded-lg px-4 py-2 shadow-xl">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 bg-cyan-500/20 rounded-full flex items-center justify-center">
+              <UserIcon className="w-4 h-4 text-cyan-400" />
+            </div>
+            <span className="text-sm font-medium text-white">{profile?.username}</span>
+          </div>
+          <button
+            onClick={signOut}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-md transition-colors text-sm"
+          >
+            <LogOut className="w-4 h-4" />
+            Sign Out
+          </button>
+        </div>
+      </div>
+
       {uniqueTopics.length > 0 && (
         <FilterBar
           topics={uniqueTopics}

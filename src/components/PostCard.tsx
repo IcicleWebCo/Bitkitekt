@@ -79,15 +79,15 @@ export function PostCard({ post }: PostCardProps) {
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
                 {post.summary && (
                   <section>
-                    <h2 className="text-base md:text-lg font-semibold text-cyan-400 mb-2">Summary</h2>
-                    <p className="text-sm md:text-base text-slate-300 leading-relaxed">{post.summary}</p>
+                    <h2 className="text-sm md:text-base font-semibold text-cyan-400 mb-2">Summary</h2>
+                    <p className="text-xs md:text-sm text-slate-300 leading-relaxed">{post.summary}</p>
                   </section>
                 )}
 
                 {post.problem_solved && (
                   <section className="bg-slate-800/50 rounded-lg p-3 md:p-4 border border-slate-700/50">
-                    <h2 className="text-base md:text-lg font-semibold text-emerald-400 mb-2">Problem Solved</h2>
-                    <p className="text-sm md:text-base text-slate-300 leading-relaxed">{post.problem_solved}</p>
+                    <h2 className="text-sm md:text-base font-semibold text-emerald-400 mb-2">Problem Solved</h2>
+                    <p className="text-xs md:text-sm text-slate-300 leading-relaxed">{post.problem_solved}</p>
                   </section>
                 )}
               </div>

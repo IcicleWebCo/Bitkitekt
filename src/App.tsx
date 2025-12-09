@@ -6,7 +6,7 @@ import { commentService } from './services/commentService';
 import { saveFilterPreferences } from './services/userPreferencesService';
 import { PostCard } from './components/PostCard';
 import { PostCardDetail } from './components/PostCardDetail';
-import { FilterBar } from './components/FilterBar';
+import { UnifiedHeader } from './components/UnifiedHeader';
 import { Login } from './components/Login';
 import { Register } from './components/Register';
 import { ForgotPassword } from './components/ForgotPassword';
@@ -376,103 +376,24 @@ function App() {
 
   return (
     <>
-      <div className="fixed top-10 right-0 z-[60] p-4">
-        {user ? (
-          <>
-            <div className="hidden md:flex items-center gap-3 bg-slate-900/80 backdrop-blur-xl border border-slate-700/50 rounded-lg px-4 py-2 shadow-xl">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 bg-cyan-500/20 rounded-full flex items-center justify-center">
-                  <UserIcon className="w-4 h-4 text-cyan-400" />
-                </div>
-                <span className="text-sm font-medium text-white">{profile?.username}</span>
-              </div>
-              <button
-                onClick={() => setShowProfile(true)}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-md transition-colors text-sm"
-              >
-                <UserIcon className="w-4 h-4" />
-                Profile
-              </button>
-              <button
-                onClick={signOut}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-md transition-colors text-sm"
-              >
-                <LogOut className="w-4 h-4" />
-                Sign Out
-              </button>
-            </div>
-
-            <div className="md:hidden relative">
-              <button
-                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className="p-2.5 bg-slate-900/80 backdrop-blur-xl border border-slate-700/50 rounded-lg shadow-xl text-slate-300 hover:text-white transition-colors"
-              >
-                {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-              </button>
-
-              {mobileMenuOpen && (
-                <>
-                  <div
-                    className="fixed inset-0 bg-black/20 z-40"
-                    onClick={() => setMobileMenuOpen(false)}
-                  />
-                  <div className="absolute right-0 top-12 w-56 bg-slate-800 border border-slate-700 rounded-lg shadow-xl overflow-hidden z-50">
-                    <div className="p-3 border-b border-slate-700">
-                      <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 bg-cyan-500/20 rounded-full flex items-center justify-center">
-                          <UserIcon className="w-4 h-4 text-cyan-400" />
-                        </div>
-                        <span className="text-sm font-medium text-white">{profile?.username}</span>
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => {
-                        setShowProfile(true);
-                        setMobileMenuOpen(false);
-                      }}
-                      className="w-full flex items-center gap-2 px-4 py-3 text-slate-300 hover:bg-slate-700 hover:text-white transition-colors text-left"
-                    >
-                      <UserIcon className="w-4 h-4" />
-                      Profile
-                    </button>
-                    <button
-                      onClick={() => {
-                        signOut();
-                        setMobileMenuOpen(false);
-                      }}
-                      className="w-full flex items-center gap-2 px-4 py-3 text-slate-300 hover:bg-slate-700 hover:text-white transition-colors text-left border-t border-slate-700"
-                    >
-                      <LogOut className="w-4 h-4" />
-                      Sign Out
-                    </button>
-                  </div>
-                </>
-              )}
-            </div>
-          </>
-        ) : (
-          <button
-            onClick={() => {
-              setAuthMode('login');
-              setShowAuthModal(true);
-            }}
-            className="px-4 py-2 bg-cyan-500 hover:bg-cyan-600 text-white rounded-lg transition-colors font-medium shadow-xl"
-          >
-            Sign In
-          </button>
-        )}
-      </div>
-
       {uniqueTopics.length > 0 && (
-        <FilterBar
+        <UnifiedHeader
           topics={uniqueTopics}
           selectedTopics={selectedTopics}
           onToggleTopic={toggleTopic}
           onClearAll={clearAllFilters}
           savingPreferences={savingPreferences}
+          user={user}
+          profile={profile}
+          onSignIn={() => {
+            setAuthMode('login');
+            setShowAuthModal(true);
+          }}
+          onSignOut={signOut}
+          onShowProfile={() => setShowProfile(true)}
         />
       )}
-      <div ref={scrollContainerRef} className="h-screen overflow-y-scroll snap-y snap-mandatory scrollbar-hide bg-slate-950 pt-36 md:pt-36">
+      <div ref={scrollContainerRef} className="h-screen overflow-y-scroll snap-y snap-mandatory scrollbar-hide bg-slate-950 pt-20">
         {filteredPosts.length === 0 ? (
           <div className="h-screen w-full flex items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
             <div className="text-center">

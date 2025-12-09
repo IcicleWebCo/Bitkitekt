@@ -9,6 +9,7 @@ import { Register } from './components/Register';
 import { ForgotPassword } from './components/ForgotPassword';
 import { ResetPassword } from './components/ResetPassword';
 import { EmailConfirmation } from './components/EmailConfirmation';
+import { Profile } from './components/Profile';
 import { useAuth } from './contexts/AuthContext';
 import type { Post } from './types/database';
 
@@ -24,6 +25,7 @@ function App() {
   const [authMode, setAuthMode] = useState<AuthMode>('login');
   const [isPasswordRecovery, setIsPasswordRecovery] = useState(false);
   const [emailConfirmation, setEmailConfirmation] = useState<ConfirmationState>(null);
+  const [showProfile, setShowProfile] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -171,6 +173,10 @@ function App() {
     );
   }
 
+  if (showProfile) {
+    return <Profile onBack={() => setShowProfile(false)} />;
+  }
+
   if (posts.length === 0) {
     return (
       <div className="h-screen w-full flex items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
@@ -192,6 +198,13 @@ function App() {
             </div>
             <span className="text-sm font-medium text-white">{profile?.username}</span>
           </div>
+          <button
+            onClick={() => setShowProfile(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-md transition-colors text-sm"
+          >
+            <UserIcon className="w-4 h-4" />
+            Profile
+          </button>
           <button
             onClick={signOut}
             className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-md transition-colors text-sm"

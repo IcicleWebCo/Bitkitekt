@@ -34,11 +34,16 @@ export function FilterBar({ topics, selectedTopics, onToggleTopic, onClearAll, s
     const handleScroll = () => {
       const currentScrollY = scrollContainer.scrollTop;
 
-      if (currentScrollY < 10) {
+      // Always show when at the top
+      if (currentScrollY < 50) {
         setIsVisible(true);
-      } else if (currentScrollY > lastScrollY) {
+      }
+      // Hide when scrolling down past threshold
+      else if (currentScrollY > lastScrollY && currentScrollY > 100) {
         setIsVisible(false);
-      } else {
+      }
+      // Show when scrolling up
+      else if (currentScrollY < lastScrollY) {
         setIsVisible(true);
       }
 
@@ -50,7 +55,7 @@ export function FilterBar({ topics, selectedTopics, onToggleTopic, onClearAll, s
   }, [lastScrollY, scrollContainerRef]);
 
   return (
-    <div className={`sticky top-0 z-50 w-full bg-slate-950/80 backdrop-blur-xl border-b border-slate-700/30 shadow-2xl transition-transform duration-300 ${isVisible ? 'translate-y-0' : '-translate-y-full'}`}>
+    <div className={`fixed top-0 left-0 right-0 z-50 w-full bg-slate-950/95 backdrop-blur-xl border-b border-slate-700/30 shadow-2xl transition-transform duration-300 ${isVisible ? 'translate-y-0' : '-translate-y-full'}`}>
       <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 py-3 md:py-4">
         <div className="flex items-center gap-2 md:gap-3">
           <div className="flex items-center gap-2 flex-shrink-0">

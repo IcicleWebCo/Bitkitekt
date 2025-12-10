@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Filter, X, ChevronLeft, ChevronRight, Search, UserIcon, LogOut, Menu, Layers } from 'lucide-react';
+import { Filter, X, ChevronLeft, ChevronRight, Search, UserIcon, LogOut, Layers } from 'lucide-react';
 
 interface UnifiedHeaderProps {
   topics: string[];
@@ -118,9 +118,31 @@ export function UnifiedHeader({
             <div className="px-4 sm:px-6 lg:px-8">
               <div className="flex items-center justify-between h-16 gap-4">
                 <div className="flex items-center gap-3 min-w-0">
+                  {/* Mobile: Filter count badge as toggle */}
+                  <button
+                    onClick={() => setShowMobileFilters(!showMobileFilters)}
+                    className="md:hidden relative group"
+                  >
+                    <div className={`
+                      flex items-center justify-center w-10 h-10 rounded-full transition-all duration-200
+                      ${hasFilters
+                        ? 'bg-gradient-to-br from-cyan-500 to-blue-500 shadow-lg shadow-cyan-500/50'
+                        : 'bg-slate-800/50 border border-slate-700/50'
+                      }
+                    `}>
+                      <Filter className={`w-5 h-5 ${hasFilters ? 'text-white' : 'text-slate-400'}`} />
+                    </div>
+                    {hasFilters && (
+                      <div className="absolute -top-1 -right-1 w-6 h-6 bg-gradient-to-br from-orange-500 to-red-500 rounded-full flex items-center justify-center shadow-lg shadow-orange-500/50 animate-pulse">
+                        <span className="text-xs font-bold text-white">{selectedTopics.size}</span>
+                      </div>
+                    )}
+                  </button>
+
+                  {/* Desktop: Full filter bar toggle */}
                   <button
                     onClick={() => setIsExpanded(!isExpanded)}
-                    className="group relative flex items-center gap-2 px-3 py-2 rounded-xl bg-gradient-to-r from-slate-800/80 to-slate-700/80 hover:from-slate-700/80 hover:to-slate-600/80 border border-slate-600/50 hover:border-slate-500/50 transition-all duration-300 shadow-lg hover:shadow-cyan-500/20"
+                    className="hidden md:flex group relative items-center gap-2 px-3 py-2 rounded-xl bg-gradient-to-r from-slate-800/80 to-slate-700/80 hover:from-slate-700/80 hover:to-slate-600/80 border border-slate-600/50 hover:border-slate-500/50 transition-all duration-300 shadow-lg hover:shadow-cyan-500/20"
                   >
                     <div className="relative">
                       <Filter className={`w-5 h-5 transition-all duration-300 ${hasFilters ? 'text-cyan-400 scale-110' : 'text-slate-400 group-hover:text-slate-300'}`} />
@@ -128,7 +150,7 @@ export function UnifiedHeader({
                         <div className="absolute -top-1 -right-1 w-2 h-2 bg-cyan-400 rounded-full animate-pulse" />
                       )}
                     </div>
-                    <span className="hidden sm:inline text-sm font-medium text-slate-300 group-hover:text-white transition-colors">
+                    <span className="text-sm font-medium text-slate-300 group-hover:text-white transition-colors">
                       Filters
                     </span>
                     {hasFilters && (
@@ -224,13 +246,6 @@ export function UnifiedHeader({
                       </span>
                     </button>
                   )}
-
-                  <button
-                    onClick={() => setShowMobileFilters(!showMobileFilters)}
-                    className="md:hidden p-2.5 rounded-xl bg-slate-800/80 hover:bg-slate-700/80 border border-slate-600/50 transition-all duration-300"
-                  >
-                    <Menu className="w-5 h-5 text-slate-300" />
-                  </button>
                 </div>
               </div>
 

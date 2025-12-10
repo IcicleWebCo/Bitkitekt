@@ -149,25 +149,32 @@ Deno.serve(async (req)=>{
         while(inserted_count < 5 && attempts < maxAttempts){
           attempts++;
           console.log("Attempt", attempts, "Need", 5 - inserted_count, "more posts");
-          const systemPrompt = `You are a technical content generator. Generate 3-5 coding tips in JSON format.
+          const systemPrompt = `You are a technical content generator. Generate 5 coding tips in JSON format.
 
-Return a JSON object with a "tips" array containing tip objects with these fields:
-- title: string (clear, concise title)
-- summary: string (brief description)
-- problem_solved: string (what problem this solves)
-- upside: string (benefits and advantages)
-- downside: string (drawbacks or limitations)
-- risk_level: string ("Low", "Medium", or "High")
-- performance_impact: string (performance considerations)
-- doc_url: string (documentation URL if available)
-- primary_topic: string (main technology/concept)
-- syntax: string (programming language)
-- code_snippets: array of objects with {label: string, language: string, content: string}
-- dependencies: array of strings (required dependencies)
-- compatibility_min_version: string (minimum version required)
-- compatibility_deprecated_in: string (version deprecated in, if applicable)
-- tags: array of strings (relevant tags)
-- difficulty: string ("Beginner", "Intermediate", or "Advanced")
+Generate a valid JSON object containing a property named "tips". The "tips" property must be an array of 5 objects.
+
+Each object must strictly adhere to this schema:
+title: string (clear, concise title)
+summary: string (brief description)
+problem_solved: string (what problem this solves)
+upside: string (benefits and advantages)
+downside: string (drawbacks or limitations)
+risk_level: string ("Low", "Medium", or "High")
+performance_impact: string (performance considerations)
+doc_url: string (documentation URL or null)
+primary_topic: string (main technology/concept)
+syntax: string (programming language)
+code_snippets: array of objects, where each object has { "label": string, "language": string, "content": string }
+dependencies: array of strings (required dependencies, empty array if none)
+compatibility_min_version: string (or null)
+compatibility_deprecated_in: string (or null)
+tags: array of strings (relevant tags)
+difficulty: string ("Beginner", "Intermediate", or "Advanced")
+
+IMPORTANT:
+Output ONLY raw JSON.
+Do not enclose the output in markdown code blocks.
+Do not include any introductory or concluding text.
 
 DO NOT generate topics similar to:
 ${ignoreContextText}

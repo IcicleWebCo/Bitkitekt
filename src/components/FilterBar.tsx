@@ -12,10 +12,57 @@ interface FilterBarProps {
 const topicColors: Record<string, string> = {
   'React': 'from-cyan-500 to-blue-500 hover:from-cyan-400 hover:to-blue-400',
   'Rust': 'from-orange-500 to-red-500 hover:from-orange-400 hover:to-red-400',
-  '.NET 8+': 'from-purple-500 to-pink-500 hover:from-purple-400 hover:to-pink-400',
-  'Blazor': 'from-violet-500 to-purple-500 hover:from-violet-400 hover:to-purple-400',
-  'Entity Framework Core': 'from-blue-500 to-indigo-500 hover:from-blue-400 hover:to-indigo-400',
+  '.NET 8+': 'from-fuchsia-500 to-pink-500 hover:from-fuchsia-400 hover:to-pink-400',
+  'Blazor': 'from-violet-500 to-fuchsia-500 hover:from-violet-400 hover:to-fuchsia-400',
+  'Entity Framework Core': 'from-blue-500 to-cyan-500 hover:from-blue-400 hover:to-cyan-400',
+  'JavaScript': 'from-yellow-500 to-orange-500 hover:from-yellow-400 hover:to-orange-400',
+  'TypeScript': 'from-blue-600 to-sky-500 hover:from-blue-500 hover:to-sky-400',
+  'Python': 'from-blue-500 to-green-500 hover:from-blue-400 hover:to-green-400',
+  'Java': 'from-red-500 to-orange-500 hover:from-red-400 hover:to-orange-400',
+  'C#': 'from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400',
+  'Go': 'from-cyan-500 to-teal-500 hover:from-cyan-400 hover:to-teal-400',
+  'Node.js': 'from-green-600 to-emerald-500 hover:from-green-500 hover:to-emerald-400',
+  'Vue': 'from-emerald-500 to-green-500 hover:from-emerald-400 hover:to-green-400',
+  'Angular': 'from-red-500 to-pink-500 hover:from-red-400 hover:to-pink-400',
+  'Svelte': 'from-orange-500 to-amber-500 hover:from-orange-400 hover:to-amber-400',
+  'Docker': 'from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400',
+  'Kubernetes': 'from-blue-500 to-cyan-500 hover:from-blue-400 hover:to-cyan-400',
+  'AWS': 'from-orange-600 to-yellow-500 hover:from-orange-500 hover:to-yellow-400',
+  'Azure': 'from-blue-500 to-sky-500 hover:from-blue-400 hover:to-sky-400',
+  'GraphQL': 'from-pink-500 to-rose-500 hover:from-pink-400 hover:to-rose-400',
+  'MongoDB': 'from-green-600 to-emerald-500 hover:from-green-500 hover:to-emerald-400',
+  'PostgreSQL': 'from-blue-600 to-indigo-500 hover:from-blue-500 hover:to-indigo-400',
+  'Redis': 'from-red-600 to-rose-500 hover:from-red-500 hover:to-rose-400',
+  'Next.js': 'from-slate-700 to-slate-600 hover:from-slate-600 hover:to-slate-500',
+  'Tailwind CSS': 'from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500',
+  'SQL': 'from-blue-500 to-indigo-600 hover:from-blue-400 hover:to-indigo-500',
+  'API': 'from-teal-500 to-emerald-500 hover:from-teal-400 hover:to-emerald-400',
+  'Testing': 'from-green-500 to-lime-500 hover:from-green-400 hover:to-lime-400',
+  'DevOps': 'from-orange-500 to-red-500 hover:from-orange-400 hover:to-red-400',
+  'Security': 'from-red-600 to-orange-500 hover:from-red-500 hover:to-orange-400',
+  'Performance': 'from-yellow-500 to-amber-500 hover:from-yellow-400 hover:to-amber-400',
 };
+
+const colorPalette = [
+  'from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400',
+  'from-blue-500 to-cyan-500 hover:from-blue-400 hover:to-cyan-400',
+  'from-fuchsia-500 to-pink-500 hover:from-fuchsia-400 hover:to-pink-400',
+  'from-orange-500 to-amber-500 hover:from-orange-400 hover:to-amber-400',
+  'from-rose-500 to-pink-500 hover:from-rose-400 hover:to-pink-400',
+  'from-violet-500 to-fuchsia-500 hover:from-violet-400 hover:to-fuchsia-400',
+  'from-lime-500 to-green-500 hover:from-lime-400 hover:to-green-400',
+  'from-sky-500 to-blue-500 hover:from-sky-400 hover:to-blue-400',
+  'from-red-500 to-rose-500 hover:from-red-400 hover:to-rose-400',
+  'from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400',
+];
+
+function getTopicColor(topic: string): string {
+  if (topicColors[topic]) {
+    return topicColors[topic];
+  }
+  const hash = topic.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+  return colorPalette[hash % colorPalette.length];
+}
 
 const topicShortNames: Record<string, string> = {
   'Entity Framework Core': 'EF Core',
@@ -94,7 +141,7 @@ export function FilterBar({ topics, selectedTopics, onToggleTopic, onClearAll, s
           `}>
             {topics.map((topic) => {
               const isSelected = selectedTopics.has(topic);
-              const gradient = topicColors[topic] || 'from-slate-500 to-slate-600 hover:from-slate-400 hover:to-slate-500';
+              const gradient = getTopicColor(topic);
               const shortName = topicShortNames[topic] || topic;
 
               return (

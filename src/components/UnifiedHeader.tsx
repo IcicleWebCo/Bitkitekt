@@ -1,6 +1,13 @@
 import { useState, useRef, useEffect } from 'react';
 import { Filter, X, ChevronLeft, ChevronRight, Search, UserIcon, LogOut, Layers } from 'lucide-react';
 
+interface TopicGradient {
+  from: string;
+  to: string;
+  hoverFrom: string;
+  hoverTo: string;
+}
+
 interface UnifiedHeaderProps {
   topics: string[];
   selectedTopics: Set<string>;
@@ -12,15 +19,8 @@ interface UnifiedHeaderProps {
   onSignIn: () => void;
   onSignOut: () => void;
   onShowProfile: () => void;
+  topicGradients?: Map<string, TopicGradient>;
 }
-
-const topicColors: Record<string, string> = {
-  'React': 'from-cyan-500 to-blue-500',
-  'Rust': 'from-orange-500 to-red-500',
-  '.NET 8+': 'from-purple-500 to-pink-500',
-  'Blazor': 'from-violet-500 to-purple-500',
-  'Entity Framework Core': 'from-blue-500 to-indigo-500',
-};
 
 const topicShortNames: Record<string, string> = {
   'Entity Framework Core': 'EF Core',
@@ -38,6 +38,7 @@ export function UnifiedHeader({
   onSignIn,
   onSignOut,
   onShowProfile,
+  topicGradients,
 }: UnifiedHeaderProps) {
   const [isExpanded, setIsExpanded] = useState(true);
   const [showUserMenu, setShowUserMenu] = useState(false);
@@ -307,7 +308,10 @@ export function UnifiedHeader({
                     >
                       {filteredTopics.map((topic) => {
                         const isSelected = selectedTopics.has(topic);
-                        const gradient = topicColors[topic] || 'from-slate-500 to-slate-600';
+                        const topicGrad = topicGradients?.get(topic);
+                        const gradient = topicGrad
+                          ? `from-${topicGrad.from} to-${topicGrad.to}`
+                          : 'from-slate-500 to-slate-600';
                         const shortName = topicShortNames[topic] || topic;
 
                         return (
@@ -406,7 +410,10 @@ export function UnifiedHeader({
               <div className="grid grid-cols-2 gap-2">
                 {filteredTopics.map((topic) => {
                   const isSelected = selectedTopics.has(topic);
-                  const gradient = topicColors[topic] || 'from-slate-500 to-slate-600';
+                  const topicGrad = topicGradients?.get(topic);
+                  const gradient = topicGrad
+                    ? `from-${topicGrad.from} to-${topicGrad.to}`
+                    : 'from-slate-500 to-slate-600';
                   const shortName = topicShortNames[topic] || topic;
 
                   return (

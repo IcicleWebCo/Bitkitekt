@@ -1,28 +1,28 @@
 import { useState } from 'react';
 import { Filter, X, ChevronDown, ChevronUp, Check } from 'lucide-react';
 
+interface TopicGradient {
+  from: string;
+  to: string;
+  hoverFrom: string;
+  hoverTo: string;
+}
+
 interface FilterBarProps {
   topics: string[];
   selectedTopics: Set<string>;
   onToggleTopic: (topic: string) => void;
   onClearAll: () => void;
   savingPreferences?: boolean;
+  topicGradients?: Map<string, TopicGradient>;
 }
-
-const topicColors: Record<string, string> = {
-  'React': 'from-cyan-500 to-blue-500 hover:from-cyan-400 hover:to-blue-400',
-  'Rust': 'from-orange-500 to-red-500 hover:from-orange-400 hover:to-red-400',
-  '.NET 8+': 'from-purple-500 to-pink-500 hover:from-purple-400 hover:to-pink-400',
-  'Blazor': 'from-violet-500 to-purple-500 hover:from-violet-400 hover:to-purple-400',
-  'Entity Framework Core': 'from-blue-500 to-indigo-500 hover:from-blue-400 hover:to-indigo-400',
-};
 
 const topicShortNames: Record<string, string> = {
   'Entity Framework Core': 'EF Core',
   '.NET 8+': '.NET 8+',
 };
 
-export function FilterBar({ topics, selectedTopics, onToggleTopic, onClearAll, savingPreferences = false }: FilterBarProps) {
+export function FilterBar({ topics, selectedTopics, onToggleTopic, onClearAll, savingPreferences = false, topicGradients }: FilterBarProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const hasFilters = selectedTopics.size > 0;
 
@@ -94,7 +94,10 @@ export function FilterBar({ topics, selectedTopics, onToggleTopic, onClearAll, s
           `}>
             {topics.map((topic) => {
               const isSelected = selectedTopics.has(topic);
-              const gradient = topicColors[topic] || 'from-slate-500 to-slate-600 hover:from-slate-400 hover:to-slate-500';
+              const gradient = topicGradients?.get(topic);
+              const gradientClasses = gradient
+                ? `from-${gradient.from} to-${gradient.to} hover:from-${gradient.hoverFrom} hover:to-${gradient.hoverTo}`
+                : 'from-slate-500 to-slate-600 hover:from-slate-400 hover:to-slate-500';
               const shortName = topicShortNames[topic] || topic;
 
               return (
@@ -110,7 +113,7 @@ export function FilterBar({ topics, selectedTopics, onToggleTopic, onClearAll, s
                   `}
                 >
                   <div className={`
-                    absolute inset-0 bg-gradient-to-r ${gradient}
+                    absolute inset-0 bg-gradient-to-r ${gradientClasses}
                     ${isSelected ? 'opacity-100' : 'opacity-60'}
                     transition-opacity duration-300
                   `} />

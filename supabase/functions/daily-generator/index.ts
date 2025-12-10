@@ -6,6 +6,63 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey"
 };
+
+const COLOR_PALETTE = [
+  { from: 'cyan-500', to: 'blue-500', hoverFrom: 'cyan-400', hoverTo: 'blue-400' },
+  { from: 'orange-500', to: 'red-500', hoverFrom: 'orange-400', hoverTo: 'red-400' },
+  { from: 'teal-500', to: 'cyan-500', hoverFrom: 'teal-400', hoverTo: 'cyan-400' },
+  { from: 'emerald-500', to: 'green-500', hoverFrom: 'emerald-400', hoverTo: 'green-400' },
+  { from: 'amber-500', to: 'orange-500', hoverFrom: 'amber-400', hoverTo: 'orange-400' },
+  { from: 'sky-500', to: 'blue-500', hoverFrom: 'sky-400', hoverTo: 'blue-400' },
+  { from: 'rose-500', to: 'pink-500', hoverFrom: 'rose-400', hoverTo: 'pink-400' },
+  { from: 'green-500', to: 'teal-500', hoverFrom: 'green-400', hoverTo: 'teal-400' },
+  { from: 'yellow-500', to: 'amber-500', hoverFrom: 'yellow-400', hoverTo: 'amber-400' },
+  { from: 'lime-500', to: 'green-500', hoverFrom: 'lime-400', hoverTo: 'green-400' },
+  { from: 'blue-500', to: 'cyan-500', hoverFrom: 'blue-400', hoverTo: 'cyan-400' },
+  { from: 'red-500', to: 'orange-500', hoverFrom: 'red-400', hoverTo: 'orange-400' },
+  { from: 'pink-500', to: 'rose-500', hoverFrom: 'pink-400', hoverTo: 'rose-400' },
+  { from: 'teal-500', to: 'emerald-500', hoverFrom: 'teal-400', hoverTo: 'emerald-400' },
+  { from: 'cyan-500', to: 'sky-500', hoverFrom: 'cyan-400', hoverTo: 'sky-400' },
+  { from: 'fuchsia-500', to: 'pink-500', hoverFrom: 'fuchsia-400', hoverTo: 'pink-400' },
+  { from: 'emerald-500', to: 'teal-500', hoverFrom: 'emerald-400', hoverTo: 'teal-400' },
+  { from: 'amber-500', to: 'yellow-500', hoverFrom: 'amber-400', hoverTo: 'yellow-400' },
+  { from: 'blue-500', to: 'sky-500', hoverFrom: 'blue-400', hoverTo: 'sky-400' },
+  { from: 'red-500', to: 'rose-500', hoverFrom: 'red-400', hoverTo: 'rose-400' },
+  { from: 'green-500', to: 'emerald-500', hoverFrom: 'green-400', hoverTo: 'emerald-400' },
+  { from: 'fuchsia-500', to: 'rose-500', hoverFrom: 'fuchsia-400', hoverTo: 'rose-400' },
+  { from: 'sky-500', to: 'cyan-500', hoverFrom: 'sky-400', hoverTo: 'cyan-400' },
+  { from: 'lime-500', to: 'yellow-500', hoverFrom: 'lime-400', hoverTo: 'yellow-400' },
+];
+
+async function ensureTopicExists(supabase: any, topicName: string) {
+  if (!topicName) return;
+
+  const { data: existing } = await supabase
+    .from('topics')
+    .select('id')
+    .eq('name', topicName)
+    .maybeSingle();
+
+  if (existing) return;
+
+  const { data: allTopics } = await supabase
+    .from('topics')
+    .select('id');
+
+  const topicCount = allTopics?.length || 0;
+  const colorIndex = topicCount % COLOR_PALETTE.length;
+  const colors = COLOR_PALETTE[colorIndex];
+
+  await supabase
+    .from('topics')
+    .insert({
+      name: topicName,
+      gradient_from: colors.from,
+      gradient_to: colors.to,
+      hover_gradient_from: colors.hoverFrom,
+      hover_gradient_to: colors.hoverTo,
+    });
+}
 function levenshteinDistance(str1, str2) {
   const s1 = str1.toLowerCase();
   const s2 = str2.toLowerCase();
@@ -249,6 +306,9 @@ Return ONLY valid JSON, no markdown code blocks or extra text.`;
                 continue;
               }
               console.log("Inserted:", tip.title);
+
+              await ensureTopicExists(supabase, tip.primary_topic);
+
               existingTitles.push(tip.title);
               inserted_count++;
               results.totalInserted++;

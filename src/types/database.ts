@@ -61,6 +61,20 @@ export interface CommentWithProfile extends Comment {
 export type CommentInsert = Omit<Comment, 'id' | 'created_at' | 'updated_at' | 'deleted_at' | 'is_edited'>;
 export type CommentUpdate = Partial<Pick<Comment, 'content' | 'is_edited' | 'deleted_at'>>;
 
+export interface Topic {
+  id: string;
+  name: string;
+  gradient_from: string;
+  gradient_to: string;
+  hover_gradient_from: string;
+  hover_gradient_to: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export type TopicInsert = Omit<Topic, 'id' | 'created_at' | 'updated_at'>;
+export type TopicUpdate = Partial<TopicInsert>;
+
 export interface Database {
   public: {
     Tables: {
@@ -76,6 +90,11 @@ export interface Database {
         Row: Comment;
         Insert: CommentInsert;
         Update: CommentUpdate;
+      };
+      topics: {
+        Row: Topic;
+        Insert: TopicInsert;
+        Update: TopicUpdate;
       };
     };
   };

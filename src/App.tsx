@@ -4,6 +4,8 @@ import { supabase } from './lib/supabase';
 import { postService } from './services/postService';
 import { commentService } from './services/commentService';
 import { saveFilterPreferences } from './services/userPreferencesService';
+import { topicService } from './services/topicService';
+import type { TopicGradient } from './services/topicService';
 import { PostCard } from './components/PostCard';
 import { PostCardDetail } from './components/PostCardDetail';
 import { UnifiedHeader } from './components/UnifiedHeader';
@@ -36,6 +38,7 @@ function App() {
   const [preferencesLoaded, setPreferencesLoaded] = useState(false);
   const [savingPreferences, setSavingPreferences] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [topicGradients, setTopicGradients] = useState<Map<string, TopicGradient>>(new Map());
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -123,6 +126,17 @@ function App() {
         })
       );
       setCommentCounts(counts);
+
+      try {
+        const topics = await topicService.getAllTopics();
+        const gradientsMap = new Map<string, TopicGradient>();
+        topics.forEach((topic) => {
+          gradientsMap.set(topic.name, topicService.topicToGradient(topic));
+        });
+        setTopicGradients(gradientsMap);
+      } catch (err) {
+        console.error('Failed to load topic gradients:', err);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load posts');
     } finally {
@@ -391,6 +405,7 @@ function App() {
           }}
           onSignOut={signOut}
           onShowProfile={() => setShowProfile(true)}
+          topicGradients={topicGradients}
         />
       )}
       <div ref={scrollContainerRef} className="h-screen overflow-y-scroll snap-y snap-mandatory scrollbar-hide bg-slate-950 pt-20">

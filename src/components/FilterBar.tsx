@@ -38,18 +38,40 @@ export function FilterBar({ topics, selectedTopics, onToggleTopic, onClearAll, s
             <div className="w-3 h-3 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin" />
             <span className="text-xs text-cyan-400 hidden sm:inline">Saving...</span>
           </div>
+          {/* Mobile: Filter count badge as toggle */}
           <button
             onClick={() => setIsCollapsed(!isCollapsed)}
-            className="flex-shrink-0 flex items-center gap-2 px-2 md:px-3 py-1.5 rounded-lg bg-slate-800/50 hover:bg-slate-800 transition-all duration-200 border border-slate-700/50"
+            className="md:hidden flex-shrink-0 relative group"
           >
-            <Filter className={`w-4 h-4 md:w-5 md:h-5 transition-colors ${hasFilters ? 'text-cyan-400' : 'text-slate-400'}`} />
+            <div className={`
+              flex items-center justify-center w-10 h-10 rounded-full transition-all duration-200
+              ${hasFilters
+                ? 'bg-gradient-to-br from-cyan-500 to-blue-500 shadow-lg shadow-cyan-500/50'
+                : 'bg-slate-800/50 border border-slate-700/50'
+              }
+            `}>
+              <Filter className={`w-5 h-5 ${hasFilters ? 'text-white' : 'text-slate-400'}`} />
+            </div>
+            {hasFilters && (
+              <div className="absolute -top-1 -right-1 w-6 h-6 bg-gradient-to-br from-orange-500 to-red-500 rounded-full flex items-center justify-center shadow-lg shadow-orange-500/50 animate-pulse">
+                <span className="text-xs font-bold text-white">{selectedTopics.size}</span>
+              </div>
+            )}
+          </button>
+
+          {/* Desktop: Full filter bar toggle */}
+          <button
+            onClick={() => setIsCollapsed(!isCollapsed)}
+            className="hidden md:flex flex-shrink-0 items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-800/50 hover:bg-slate-800 transition-all duration-200 border border-slate-700/50"
+          >
+            <Filter className={`w-5 h-5 transition-colors ${hasFilters ? 'text-cyan-400' : 'text-slate-400'}`} />
             {isCollapsed ? (
               <ChevronDown className="w-4 h-4 text-slate-400" />
             ) : (
               <ChevronUp className="w-4 h-4 text-slate-400" />
             )}
             {hasFilters && (
-              <span className="text-xs md:text-sm font-medium text-cyan-400 transition-opacity duration-200">
+              <span className="text-sm font-medium text-cyan-400 transition-opacity duration-200">
                 ({selectedTopics.size})
               </span>
             )}

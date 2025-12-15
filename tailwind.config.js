@@ -2,6 +2,36 @@
 export default {
   content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
   darkMode: 'class',
+  safelist: [
+    // Gradient from colors
+    'from-cyan-500', 'from-orange-500', 'from-teal-500', 'from-emerald-500', 'from-amber-500',
+    'from-sky-500', 'from-rose-500', 'from-green-500', 'from-yellow-500', 'from-lime-500',
+    'from-blue-500', 'from-red-500', 'from-pink-500', 'from-fuchsia-500',
+    'from-cyan-400', 'from-orange-400', 'from-teal-400', 'from-emerald-400', 'from-amber-400',
+    'from-sky-400', 'from-rose-400', 'from-green-400', 'from-yellow-400', 'from-lime-400',
+    'from-blue-400', 'from-red-400', 'from-pink-400', 'from-fuchsia-400',
+    // Gradient to colors
+    'to-cyan-500', 'to-orange-500', 'to-teal-500', 'to-emerald-500', 'to-amber-500',
+    'to-sky-500', 'to-rose-500', 'to-green-500', 'to-yellow-500', 'to-lime-500',
+    'to-blue-500', 'to-red-500', 'to-pink-500', 'to-fuchsia-500',
+    'to-cyan-400', 'to-orange-400', 'to-teal-400', 'to-emerald-400', 'to-amber-400',
+    'to-sky-400', 'to-rose-400', 'to-green-400', 'to-yellow-400', 'to-lime-400',
+    'to-blue-400', 'to-red-400', 'to-pink-400', 'to-fuchsia-400',
+    // Hover gradient from colors
+    'hover:from-cyan-500', 'hover:from-orange-500', 'hover:from-teal-500', 'hover:from-emerald-500', 'hover:from-amber-500',
+    'hover:from-sky-500', 'hover:from-rose-500', 'hover:from-green-500', 'hover:from-yellow-500', 'hover:from-lime-500',
+    'hover:from-blue-500', 'hover:from-red-500', 'hover:from-pink-500', 'hover:from-fuchsia-500',
+    'hover:from-cyan-400', 'hover:from-orange-400', 'hover:from-teal-400', 'hover:from-emerald-400', 'hover:from-amber-400',
+    'hover:from-sky-400', 'hover:from-rose-400', 'hover:from-green-400', 'hover:from-yellow-400', 'hover:from-lime-400',
+    'hover:from-blue-400', 'hover:from-red-400', 'hover:from-pink-400', 'hover:from-fuchsia-400',
+    // Hover gradient to colors
+    'hover:to-cyan-500', 'hover:to-orange-500', 'hover:to-teal-500', 'hover:to-emerald-500', 'hover:to-amber-500',
+    'hover:to-sky-500', 'hover:to-rose-500', 'hover:to-green-500', 'hover:to-yellow-500', 'hover:to-lime-500',
+    'hover:to-blue-500', 'hover:to-red-500', 'hover:to-pink-500', 'hover:to-fuchsia-500',
+    'hover:to-cyan-400', 'hover:to-orange-400', 'hover:to-teal-400', 'hover:to-emerald-400', 'hover:to-amber-400',
+    'hover:to-sky-400', 'hover:to-rose-400', 'hover:to-green-400', 'hover:to-yellow-400', 'hover:to-lime-400',
+    'hover:to-blue-400', 'hover:to-red-400', 'hover:to-pink-400', 'hover:to-fuchsia-400',
+  ],
   theme: {
     extend: {
       colors: {

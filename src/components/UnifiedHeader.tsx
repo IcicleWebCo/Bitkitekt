@@ -1,6 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
 import { Filter, X, ChevronLeft, ChevronRight, Search, UserIcon, LogOut, Layers } from 'lucide-react';
-import { createGradient } from '../utils/colorUtils';
 
 interface TopicGradient {
   from: string;
@@ -310,11 +309,8 @@ export function UnifiedHeader({
                         const isSelected = selectedTopics.has(topic);
                         const topicGrad = topicGradients?.get(topic);
                         const gradient = topicGrad
-                          ? createGradient(topicGrad.from, topicGrad.to)
-                          : createGradient('slate-500', 'slate-600');
-                        const hoverGradient = topicGrad
-                          ? createGradient(topicGrad.hoverFrom, topicGrad.hoverTo)
-                          : createGradient('slate-500', 'slate-600');
+                          ? `from-${topicGrad.from} to-${topicGrad.to}`
+                          : 'from-slate-500 to-slate-600';
                         const shortName = topicShortNames[topic] || topic;
 
                         return (
@@ -324,21 +320,10 @@ export function UnifiedHeader({
                             className={`group relative overflow-hidden rounded-full transition-all duration-300 flex-shrink-0 ${
                               isSelected ? 'scale-105 shadow-lg shadow-cyan-500/25' : 'hover:scale-105 shadow-md'
                             }`}
-                            onMouseEnter={(e) => {
-                              const bg = e.currentTarget.querySelector('.gradient-bg') as HTMLElement;
-                              if (bg) bg.style.backgroundImage = hoverGradient;
-                            }}
-                            onMouseLeave={(e) => {
-                              const bg = e.currentTarget.querySelector('.gradient-bg') as HTMLElement;
-                              if (bg) bg.style.backgroundImage = gradient;
-                            }}
                           >
-                            <div
-                              className={`gradient-bg absolute inset-0 ${
-                                isSelected ? 'opacity-100' : 'opacity-60 group-hover:opacity-80'
-                              } transition-opacity duration-300`}
-                              style={{ backgroundImage: gradient }}
-                            />
+                            <div className={`absolute inset-0 bg-gradient-to-r ${gradient} ${
+                              isSelected ? 'opacity-100' : 'opacity-60 group-hover:opacity-80'
+                            } transition-opacity duration-300`} />
 
                             <div className="relative px-4 py-2 flex items-center gap-2">
                               <span className="text-sm font-semibold text-white whitespace-nowrap">
@@ -426,8 +411,8 @@ export function UnifiedHeader({
                   const isSelected = selectedTopics.has(topic);
                   const topicGrad = topicGradients?.get(topic);
                   const gradient = topicGrad
-                    ? createGradient(topicGrad.from, topicGrad.to)
-                    : createGradient('slate-500', 'slate-600');
+                    ? `from-${topicGrad.from} to-${topicGrad.to}`
+                    : 'from-slate-500 to-slate-600';
                   const shortName = topicShortNames[topic] || topic;
 
                   return (
@@ -438,12 +423,9 @@ export function UnifiedHeader({
                         isSelected ? 'scale-105 shadow-lg shadow-cyan-500/25' : 'shadow-md'
                       }`}
                     >
-                      <div
-                        className={`absolute inset-0 ${
-                          isSelected ? 'opacity-100' : 'opacity-60'
-                        } transition-opacity duration-300`}
-                        style={{ backgroundImage: gradient }}
-                      />
+                      <div className={`absolute inset-0 bg-gradient-to-r ${gradient} ${
+                        isSelected ? 'opacity-100' : 'opacity-60'
+                      } transition-opacity duration-300`} />
 
                       <div className="relative px-3 py-3 flex items-center justify-center gap-2">
                         <span className="text-sm font-semibold text-white text-center">

@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { ExternalLink, AlertTriangle, TrendingUp, TrendingDown, Code2, Package, Tag, Calendar, ChevronDown, ChevronUp, ArrowRight, MessageCircle } from 'lucide-react';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import type { Post } from '../types/database';
 
 const riskColors = {
@@ -111,6 +113,7 @@ export function PostCard({ post, onViewDetail, onViewComments, commentCount }: P
                 {post.code_snippets.map((snippet, idx) => {
                   const isExpanded = expandedSnippets.has(idx);
                   const previewContent = snippet.content.split('\n')[0];
+                  const language = snippet.language || post.syntax || 'javascript';
 
                   return (
                     <div key={idx} className="bg-slate-950 rounded-lg border border-slate-700/50 overflow-hidden">
@@ -124,9 +127,7 @@ export function PostCard({ post, onViewDetail, onViewComments, commentCount }: P
                             <span className="text-xs md:text-sm font-medium text-slate-300 truncate">
                               {snippet.label || 'Code Example'}
                             </span>
-                            {snippet.language && (
-                              <span className="hidden sm:inline text-xs text-slate-500">{snippet.language}</span>
-                            )}
+                            <span className="hidden sm:inline text-xs text-slate-500">{language}</span>
                           </div>
                           {isExpanded ? (
                             <ChevronUp className="w-4 h-4 text-slate-400 flex-shrink-0" />
@@ -137,9 +138,26 @@ export function PostCard({ post, onViewDetail, onViewComments, commentCount }: P
                       </button>
 
                       {isExpanded ? (
-                        <pre className="p-3 md:p-4 overflow-x-auto text-white">
-                          <code className="text-xs md:text-sm font-mono">{snippet.content}</code>
-                        </pre>
+                        <div className="overflow-x-auto">
+                          <SyntaxHighlighter
+                            language={language}
+                            style={vscDarkPlus}
+                            customStyle={{
+                              margin: 0,
+                              padding: '1rem',
+                              fontSize: '0.875rem',
+                              background: 'rgb(2 6 23)',
+                            }}
+                            codeTagProps={{
+                              style: {
+                                fontSize: '0.75rem',
+                                lineHeight: '1.5',
+                              }
+                            }}
+                          >
+                            {snippet.content}
+                          </SyntaxHighlighter>
+                        </div>
                       ) : (
                         <div className="p-3 md:p-4 overflow-hidden">
                           <code className="text-xs md:text-sm font-mono text-slate-400 truncate block">

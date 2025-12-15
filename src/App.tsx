@@ -83,6 +83,18 @@ function App() {
   }, [profile, preferencesLoaded]);
 
   useEffect(() => {
+    if (profile && preferencesLoaded) {
+      const preferences = profile.filter_preferences || [];
+      const currentPreferences = Array.from(selectedTopics).sort().join(',');
+      const newPreferences = preferences.sort().join(',');
+
+      if (currentPreferences !== newPreferences) {
+        setSelectedTopics(new Set(preferences));
+      }
+    }
+  }, [profile?.filter_preferences, preferencesLoaded]);
+
+  useEffect(() => {
     if (!user || !preferencesLoaded) return;
 
     if (saveTimeoutRef.current) {

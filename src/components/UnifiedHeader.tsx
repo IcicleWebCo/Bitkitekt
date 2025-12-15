@@ -171,7 +171,7 @@ export function UnifiedHeader({
                   <div className="hidden md:flex items-center gap-2 px-3 py-2 rounded-xl bg-slate-800/40 border border-slate-700/40">
                     <Layers className="w-4 h-4 text-cyan-400" />
                     <span className="text-sm font-semibold bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">
-                      DevDaily
+                      Syntalyst
                     </span>
                   </div>
                 </div>

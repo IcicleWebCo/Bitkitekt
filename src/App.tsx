@@ -22,7 +22,7 @@ type AuthMode = 'login' | 'register' | 'forgot-password';
 type ConfirmationState = { type: 'confirmed' | 'error'; message?: string } | null;
 
 function App() {
-  const { user, profile, loading: authLoading, signOut } = useAuth();
+  const { user, profile, loading: authLoading, signOut, refreshProfile } = useAuth();
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -93,6 +93,7 @@ function App() {
       try {
         setSavingPreferences(true);
         await saveFilterPreferences(user.id, Array.from(selectedTopics));
+        await refreshProfile();
       } catch (err) {
         console.error('Failed to save filter preferences:', err);
       } finally {
@@ -105,7 +106,7 @@ function App() {
         clearTimeout(saveTimeoutRef.current);
       }
     };
-  }, [selectedTopics, user, preferencesLoaded]);
+  }, [selectedTopics, user, preferencesLoaded, refreshProfile]);
 
   const loadPosts = async () => {
     try {

@@ -9,7 +9,7 @@ interface ProfileProps {
 }
 
 export function Profile({ onBack }: ProfileProps) {
-  const { user, profile } = useAuth();
+  const { user, profile, refreshProfile } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [username, setUsername] = useState(profile?.username || '');
   const [saving, setSaving] = useState(false);
@@ -31,6 +31,7 @@ export function Profile({ onBack }: ProfileProps) {
 
       if (updateError) throw updateError;
 
+      await refreshProfile();
       setSuccess(true);
       setIsEditing(false);
       setTimeout(() => setSuccess(false), 3000);
@@ -55,6 +56,7 @@ export function Profile({ onBack }: ProfileProps) {
 
     try {
       await clearFilterPreferences(user.id);
+      await refreshProfile();
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
     } catch (err) {

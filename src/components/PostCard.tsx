@@ -39,10 +39,6 @@ export function PostCard({ post, onViewDetail, onViewComments, commentCount }: P
       <div className="max-w-5xl w-full relative z-10">
         <article className="bg-slate-900/50 backdrop-blur-xl border border-slate-700/50 rounded-xl md:rounded-2xl shadow-2xl p-4 sm:p-6 md:p-10 space-y-4 md:space-y-6 relative">
 
-          <div className="absolute top-20 right-4 sm:top-4 z-20">
-            <PowerUpButton postId={post.id} variant="card" />
-          </div>
-
           <header className="space-y-3 md:space-y-4 border-b border-slate-700/50 pb-4 md:pb-6">
             <div className="flex items-start justify-between gap-4">
               <h2 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold text-white leading-tight flex-1">
@@ -60,6 +56,7 @@ export function PostCard({ post, onViewDetail, onViewComments, commentCount }: P
             </div>
 
             <div className="flex flex-wrap items-center gap-2 md:gap-3 text-xs sm:text-sm">
+              <PowerUpButton postId={post.id} variant="card" />
               {post.primary_topic && (
                 <div className="inline-flex items-center gap-1 sm:gap-1.5 bg-cyan-500/10 text-cyan-300 px-2 sm:px-3 py-1 rounded-md border border-cyan-500/30">
                   <Code2 className="w-3 h-3 sm:w-3.5 sm:h-3.5" />

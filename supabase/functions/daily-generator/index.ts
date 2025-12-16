@@ -292,6 +292,7 @@ Return ONLY valid JSON, no markdown code blocks or extra text.`;
     const message = await anthropic.messages.create({
       model: "claude-sonnet-4-20250514",
       max_tokens: 50000,
+      stream: true,
       temperature: 1,
       messages: [
         {

@@ -413,7 +413,7 @@ export const UnifiedHeader = forwardRef<HTMLElement, UnifiedHeaderProps>(functio
             </div>
           </div>
 
-          {hasFilters && (
+          {/* {hasFilters && (
             <div className="border-t border-slate-700/30 bg-slate-900/30">
               <div className="max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 py-2">
                 <div className="flex items-center gap-2 flex-wrap">
@@ -447,7 +447,7 @@ export const UnifiedHeader = forwardRef<HTMLElement, UnifiedHeaderProps>(functio
                 </div>
               </div>
             </div>
-          )}
+          )} */}
         </div>
       </header>
 

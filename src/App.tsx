@@ -462,7 +462,7 @@ function App() {
       <div
         ref={scrollContainerRef}
         className="h-screen overflow-y-scroll snap-y snap-mandatory scrollbar-hide bg-slate-950 transition-[padding] duration-300 ease-out"
-        style={{ paddingTop: `${Math.max(headerHeight + 48, 120)}px` }}
+        style={{ paddingTop: `${Math.max(headerHeight + 24, 80)}px` }}
       >
         {filteredPosts.length === 0 ? (
           <div className="h-screen w-full flex items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">

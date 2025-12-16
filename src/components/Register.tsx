@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { User, Mail, Lock, AlertCircle, CheckCircle } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { validatePasswordStrength, isPasswordValid } from '../utils/passwordValidation';
+import { TIMEOUTS, LIMITS } from '../constants';
 
 interface RegisterProps {
   onToggleMode: () => void;
@@ -21,7 +22,7 @@ export function Register({ onToggleMode }: RegisterProps) {
   const passwordStrength = validatePasswordStrength(password);
 
   const checkUsernameAvailability = async (username: string) => {
-    if (username.length < 3) {
+    if (username.length < LIMITS.USERNAME_MIN_LENGTH) {
       setUsernameAvailable(null);
       return;
     }
@@ -54,23 +55,25 @@ export function Register({ onToggleMode }: RegisterProps) {
     }
   };
 
-  const handleUsernameChange = (value: string) => {
-    setUsername(value);
-    setUsernameAvailable(null);
+  useEffect(() => {
+    if (!username) {
+      setUsernameAvailable(null);
+      return;
+    }
 
     const timeoutId = setTimeout(() => {
-      checkUsernameAvailability(value);
-    }, 500);
+      checkUsernameAvailability(username);
+    }, TIMEOUTS.USERNAME_CHECK_DEBOUNCE);
 
     return () => clearTimeout(timeoutId);
-  };
+  }, [username]);
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
 
-    if (username.length < 3 || username.length > 30) {
-      setError('Username must be between 3 and 30 characters');
+    if (username.length < LIMITS.USERNAME_MIN_LENGTH || username.length > LIMITS.USERNAME_MAX_LENGTH) {
+      setError(`Username must be between ${LIMITS.USERNAME_MIN_LENGTH} and ${LIMITS.USERNAME_MAX_LENGTH} characters`);
       return;
     }
 
@@ -85,7 +88,7 @@ export function Register({ onToggleMode }: RegisterProps) {
     }
 
     if (!isPasswordValid(password)) {
-      setError('Password must be at least 8 characters long');
+      setError(`Password must be at least ${LIMITS.PASSWORD_MIN_LENGTH} characters long`);
       return;
     }
 
@@ -156,30 +159,33 @@ export function Register({ onToggleMode }: RegisterProps) {
             <input
               type="text"
               value={username}
-              onChange={(e) => handleUsernameChange(e.target.value)}
+              onChange={(e) => {
+                setUsername(e.target.value);
+                setUsernameAvailable(null);
+              }}
               className="w-full pl-11 pr-10 py-3 bg-slate-800/50 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition-all"
               placeholder="Enter username"
               required
-              minLength={3}
-              maxLength={30}
+              minLength={LIMITS.USERNAME_MIN_LENGTH}
+              maxLength={LIMITS.USERNAME_MAX_LENGTH}
             />
             {checkingUsername && (
               <div className="absolute right-3 top-1/2 -translate-y-1/2">
                 <div className="w-5 h-5 border-2 border-slate-400 border-t-transparent rounded-full animate-spin" />
               </div>
             )}
-            {!checkingUsername && usernameAvailable === true && username.length >= 3 && (
+            {!checkingUsername && usernameAvailable === true && username.length >= LIMITS.USERNAME_MIN_LENGTH && (
               <CheckCircle className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-green-400" />
             )}
             {!checkingUsername && usernameAvailable === false && (
               <AlertCircle className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-red-400" />
             )}
           </div>
-          {username.length >= 3 && usernameAvailable === false && (
+          {username.length >= LIMITS.USERNAME_MIN_LENGTH && usernameAvailable === false && (
             <p className="text-xs text-red-400 mt-1">Username is already taken</p>
           )}
-          {username.length > 0 && username.length < 3 && (
-            <p className="text-xs text-slate-400 mt-1">Must be at least 3 characters</p>
+          {username.length > 0 && username.length < LIMITS.USERNAME_MIN_LENGTH && (
+            <p className="text-xs text-slate-400 mt-1">Must be at least {LIMITS.USERNAME_MIN_LENGTH} characters</p>
           )}
         </div>
 
@@ -214,7 +220,7 @@ export function Register({ onToggleMode }: RegisterProps) {
               className="w-full pl-11 pr-4 py-3 bg-slate-800/50 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition-all"
               placeholder="Create a strong password"
               required
-              minLength={8}
+              minLength={LIMITS.PASSWORD_MIN_LENGTH}
             />
           </div>
           {password.length > 0 && (

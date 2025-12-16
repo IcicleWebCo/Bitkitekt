@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { Send, X } from 'lucide-react';
+import { LIMITS, CHAR_LIMITS } from '../constants';
 
 interface CommentFormProps {
   onSubmit: (content: string) => Promise<void>;
@@ -23,8 +24,6 @@ export function CommentForm({
   const [error, setError] = useState<string | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  const MAX_LENGTH = 2000;
-
   useEffect(() => {
     if (autoFocus && textareaRef.current) {
       textareaRef.current.focus();
@@ -41,8 +40,8 @@ export function CommentForm({
       return;
     }
 
-    if (trimmedContent.length > MAX_LENGTH) {
-      setError(`Comment cannot exceed ${MAX_LENGTH} characters`);
+    if (trimmedContent.length > LIMITS.MAX_COMMENT_LENGTH) {
+      setError(`Comment cannot exceed ${LIMITS.MAX_COMMENT_LENGTH} characters`);
       return;
     }
 
@@ -65,8 +64,8 @@ export function CommentForm({
     }
   };
 
-  const remainingChars = MAX_LENGTH - content.length;
-  const isNearLimit = remainingChars < 100;
+  const remainingChars = LIMITS.MAX_COMMENT_LENGTH - content.length;
+  const isNearLimit = remainingChars < CHAR_LIMITS.COMMENT_WARNING_THRESHOLD;
 
   return (
     <form onSubmit={handleSubmit} className="space-y-2">
@@ -80,7 +79,7 @@ export function CommentForm({
           disabled={isSubmitting}
           className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700/50 rounded-lg text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 transition-all resize-none disabled:opacity-50 disabled:cursor-not-allowed"
           rows={3}
-          maxLength={MAX_LENGTH}
+          maxLength={LIMITS.MAX_COMMENT_LENGTH}
         />
         {isNearLimit && (
           <div className={`absolute bottom-2 right-2 text-xs ${remainingChars < 0 ? 'text-red-400' : 'text-slate-500'}`}>

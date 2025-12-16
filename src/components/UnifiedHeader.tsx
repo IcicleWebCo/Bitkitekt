@@ -1,5 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Filter, X, ChevronLeft, ChevronRight, Search, UserIcon, LogOut, Layers, GraduationCap } from 'lucide-react';
+import type { User } from '@supabase/supabase-js';
+import type { Profile } from '../types/database';
 
 interface TopicGradient {
   from: string;
@@ -14,8 +16,8 @@ interface UnifiedHeaderProps {
   onToggleTopic: (topic: string) => void;
   onClearAll: () => void;
   savingPreferences?: boolean;
-  user: any;
-  profile: any;
+  user: User | null;
+  profile: Profile | null;
   onSignIn: () => void;
   onSignOut: () => void;
   onShowProfile: () => void;

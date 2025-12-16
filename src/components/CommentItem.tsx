@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Reply, Edit3, Trash2, User as UserIcon } from 'lucide-react';
 import { CommentForm } from './CommentForm';
 import type { CommentWithProfile } from '../types/database';
+import { LIMITS } from '../constants';
 
 interface CommentItemProps {
   comment: CommentWithProfile;
@@ -11,8 +12,6 @@ interface CommentItemProps {
   onDelete: (commentId: string) => Promise<void>;
   depth?: number;
 }
-
-const MAX_DEPTH = 5;
 
 export function CommentItem({
   comment,
@@ -27,7 +26,7 @@ export function CommentItem({
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const isOwner = currentUserId === comment.user_id;
-  const canReply = depth < MAX_DEPTH;
+  const canReply = depth < LIMITS.MAX_COMMENT_DEPTH;
 
   const handleReply = async (content: string) => {
     await onReply(comment.id, content);

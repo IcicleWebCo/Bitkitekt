@@ -17,6 +17,7 @@ import { EmailConfirmation } from './components/EmailConfirmation';
 import { Profile } from './components/Profile';
 import { useAuth } from './contexts/AuthContext';
 import type { Post } from './types/database';
+import { TIMEOUTS } from './constants';
 
 type AuthMode = 'login' | 'register' | 'forgot-password';
 type ConfirmationState = { type: 'confirmed' | 'error'; message?: string } | null;
@@ -113,7 +114,7 @@ function App() {
       } finally {
         setSavingPreferences(false);
       }
-    }, 1000);
+    }, TIMEOUTS.DEBOUNCE_FILTER_PREFERENCES);
 
     return () => {
       if (saveTimeoutRef.current) {
@@ -124,9 +125,7 @@ function App() {
 
   const loadPosts = async () => {
     try {
-      console.log('loading posts');
       const data = await postService.getAllPosts();
-      console.log(data);
       setPosts(data);
 
       const counts = new Map<string, number>();

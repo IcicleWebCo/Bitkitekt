@@ -36,25 +36,45 @@ const COLOR_PALETTE = [
 ];
 
 async function ensureTopicsBulk(supabase: any, topicNames: string[]) {
-  if (!topicNames || topicNames.length === 0) return;
+  console.log("ensureTopicsBulk called with:", topicNames);
+  if (!topicNames || topicNames.length === 0) {
+    console.log("No topics to ensure, returning early");
+    return;
+  }
 
   const uniqueTopics = [...new Set(topicNames.filter(name => name))];
+  console.log("Unique topics to process:", uniqueTopics);
 
-  const { data: existingTopics } = await supabase
+  const { data: existingTopics, error: selectError } = await supabase
     .from('topics')
     .select('name, id')
     .in('name', uniqueTopics);
 
+  if (selectError) {
+    console.error("Error fetching existing topics:", JSON.stringify(selectError, null, 2));
+  } else {
+    console.log("Existing topics found:", existingTopics);
+  }
+
   const existingNames = new Set(existingTopics?.map((t: any) => t.name) || []);
   const topicsToCreate = uniqueTopics.filter(name => !existingNames.has(name));
 
-  if (topicsToCreate.length === 0) return;
+  console.log("Topics to create:", topicsToCreate);
+  if (topicsToCreate.length === 0) {
+    console.log("All topics already exist, no creation needed");
+    return;
+  }
 
-  const { data: allTopics } = await supabase
+  const { data: allTopics, error: countError } = await supabase
     .from('topics')
     .select('id');
 
+  if (countError) {
+    console.error("Error counting topics:", JSON.stringify(countError, null, 2));
+  }
+
   let startingIndex = allTopics?.length || 0;
+  console.log("Starting index for color assignment:", startingIndex);
 
   const newTopics = topicsToCreate.map((name, idx) => {
     const colorIndex = (startingIndex + idx) % COLOR_PALETTE.length;
@@ -68,9 +88,18 @@ async function ensureTopicsBulk(supabase: any, topicNames: string[]) {
     };
   });
 
-  await supabase
+  console.log("Inserting new topics:", JSON.stringify(newTopics, null, 2));
+
+  const { data: insertedTopics, error: insertError } = await supabase
     .from('topics')
-    .insert(newTopics);
+    .insert(newTopics)
+    .select();
+
+  if (insertError) {
+    console.error("Error inserting topics:", JSON.stringify(insertError, null, 2));
+  } else {
+    console.log("Successfully inserted topics:", insertedTopics);
+  }
 }
 
 function levenshteinDistance(str1: string, str2: string): number {
@@ -306,14 +335,23 @@ Return ONLY valid JSON, no markdown code blocks or extra text.`;
 
     console.log("Streaming response from Claude API...");
     let responseText = "";
+    let chunkCount = 0;
 
     for await (const event of stream) {
+      console.log("Stream event type:", event.type);
       if (event.type === "content_block_delta" && event.delta.type === "text_delta") {
         responseText += event.delta.text;
+        chunkCount++;
+        if (chunkCount % 10 === 0) {
+          console.log(`Received ${chunkCount} chunks, total length: ${responseText.length}`);
+        }
       }
     }
 
+    console.log("Stream complete. Total chunks:", chunkCount);
     console.log("Claude response text length:", responseText.length);
+    console.log("First 500 chars:", responseText.substring(0, 500));
+    console.log("Last 500 chars:", responseText.substring(Math.max(0, responseText.length - 500)));
 
     if (!responseText) {
       throw new Error("No content received from Claude API stream");
@@ -391,34 +429,49 @@ Return ONLY valid JSON, no markdown code blocks or extra text.`;
     }
 
     const uniqueTopics = [...new Set(validPosts.map(p => p.primary_topic).filter(t => t))];
-    console.log("Creating topics:", uniqueTopics.length);
+    console.log("Creating topics:", uniqueTopics.length, uniqueTopics);
     await ensureTopicsBulk(supabase, uniqueTopics);
 
     console.log("Attempting bulk insert of", validPosts.length, "posts...");
-    const { error: bulkError } = await supabase
+    console.log("Sample post structure:", JSON.stringify(validPosts[0], null, 2));
+
+    const { data: insertData, error: bulkError } = await supabase
       .from("post")
-      .insert(validPosts);
+      .insert(validPosts)
+      .select();
 
     let insertedCount = 0;
     let bulkInserted = false;
 
     if (!bulkError) {
       console.log("Bulk insert successful!");
+      console.log("Inserted data:", insertData);
       insertedCount = validPosts.length;
       bulkInserted = true;
     } else {
-      console.warn("Bulk insert failed:", bulkError.message);
+      console.warn("Bulk insert failed:", JSON.stringify(bulkError, null, 2));
+      console.log("Error code:", bulkError.code);
+      console.log("Error message:", bulkError.message);
+      console.log("Error details:", bulkError.details);
       console.log("Falling back to individual inserts...");
 
-      for (const post of validPosts) {
-        const { error: insertError } = await supabase
+      for (let i = 0; i < validPosts.length; i++) {
+        const post = validPosts[i];
+        console.log(`Attempting insert ${i + 1}/${validPosts.length}: ${post.title}`);
+
+        const { data: singleData, error: insertError } = await supabase
           .from("post")
-          .insert(post);
+          .insert(post)
+          .select();
 
         if (insertError) {
-          console.error("Failed to insert:", post.title, insertError.message);
+          console.error(`Failed to insert post ${i + 1}:`, post.title);
+          console.error("Error details:", JSON.stringify(insertError, null, 2));
+          console.error("Post data:", JSON.stringify(post, null, 2));
         } else {
           insertedCount++;
+          console.log(`Successfully inserted ${i + 1}/${validPosts.length}:`, post.title);
+          console.log("Inserted data:", singleData);
         }
       }
 

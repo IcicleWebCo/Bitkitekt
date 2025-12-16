@@ -145,12 +145,16 @@ export function UnifiedHeader({
             <div className="px-4 sm:px-6 lg:px-8">
               <div className="flex items-center justify-between h-16 gap-4">
                 <div className="flex items-center gap-3 min-w-0">
-                  <div id="SiteName" className="md:flex items-center gap-2 px-3 py-2 rounded-xl bg-slate-800/40 border border-slate-700/40">
+                  <button
+                    id="SiteName"
+                    onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                    className="md:flex items-center gap-2 px-3 py-2 rounded-xl bg-slate-800/40 border border-slate-700/40 hover:bg-slate-800/60 hover:border-slate-600/50 transition-all duration-200 cursor-pointer"
+                  >
                     <Layers className="w-4 h-4 text-cyan-400" />
                     <span className="text-sm font-semibold bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">
                       Syntalyst
                     </span>
-                  </div>
+                  </button>
                   {/* Mobile: Filter count badge as toggle */}
                   <button
                     onClick={() => setShowMobileFilters(!showMobileFilters)}

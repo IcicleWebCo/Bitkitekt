@@ -289,10 +289,11 @@ ${ignoreContextText}
 
 Return ONLY valid JSON, no markdown code blocks or extra text.`;
 
-    console.log("Calling Claude API...");
-    const message = await anthropic.messages.create({
+    console.log("Calling Claude API with streaming...");
+    const stream = await anthropic.messages.create({
       model: "claude-sonnet-4-20250514",
       max_tokens: 50000,
+      stream: true,
       temperature: 1,
       messages: [
         {
@@ -303,19 +304,20 @@ Return ONLY valid JSON, no markdown code blocks or extra text.`;
       system: systemPrompt
     });
 
-    console.log("Claude API response received:", JSON.stringify(message).substring(0, 500));
+    console.log("Streaming response from Claude API...");
+    let responseText = "";
 
-    if (!message.content || !Array.isArray(message.content) || message.content.length === 0) {
-      throw new Error("Invalid response from Claude API: no content array");
+    for await (const event of stream) {
+      if (event.type === "content_block_delta" && event.delta.type === "text_delta") {
+        responseText += event.delta.text;
+      }
     }
 
-    const firstContent = message.content[0];
-    if (!firstContent || firstContent.type !== "text") {
-      throw new Error("Invalid response from Claude API: first content is not text");
-    }
-
-    const responseText = firstContent.text || "";
     console.log("Claude response text length:", responseText.length);
+
+    if (!responseText) {
+      throw new Error("No content received from Claude API stream");
+    }
 
     let generatedTips: any[];
     try {

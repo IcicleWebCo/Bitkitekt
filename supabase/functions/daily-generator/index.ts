@@ -302,8 +302,19 @@ Return ONLY valid JSON, no markdown code blocks or extra text.`;
       system: systemPrompt
     });
 
-    const responseText = message.content[0].type === "text" ? message.content[0].text : "";
-    console.log("Claude response received, length:", responseText.length);
+    console.log("Claude API response received:", JSON.stringify(message).substring(0, 500));
+
+    if (!message.content || !Array.isArray(message.content) || message.content.length === 0) {
+      throw new Error("Invalid response from Claude API: no content array");
+    }
+
+    const firstContent = message.content[0];
+    if (!firstContent || firstContent.type !== "text") {
+      throw new Error("Invalid response from Claude API: first content is not text");
+    }
+
+    const responseText = firstContent.text || "";
+    console.log("Claude response text length:", responseText.length);
 
     let generatedTips: any[];
     try {

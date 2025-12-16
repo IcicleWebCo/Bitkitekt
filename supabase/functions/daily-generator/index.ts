@@ -318,11 +318,10 @@ ${ignoreContextText}
 
 Return ONLY valid JSON, no markdown code blocks or extra text.`;
 
-    console.log("Calling Claude API with streaming...");
-    const stream = await anthropic.messages.create({
+    console.log("Calling Claude API...");
+    const message = await anthropic.messages.create({
       model: "claude-sonnet-4-20250514",
       max_tokens: 50000,
-      stream: true,
       temperature: 1,
       messages: [
         {
@@ -333,28 +332,21 @@ Return ONLY valid JSON, no markdown code blocks or extra text.`;
       system: systemPrompt
     });
 
-    console.log("Streaming response from Claude API...");
-    let responseText = "";
-    let chunkCount = 0;
+    console.log("Received response from Claude API");
+    console.log("Stop reason:", message.stop_reason);
+    console.log("Usage:", JSON.stringify(message.usage, null, 2));
 
-    for await (const event of stream) {
-      console.log("Stream event type:", event.type);
-      if (event.type === "content_block_delta" && event.delta.type === "text_delta") {
-        responseText += event.delta.text;
-        chunkCount++;
-        if (chunkCount % 10 === 0) {
-          console.log(`Received ${chunkCount} chunks, total length: ${responseText.length}`);
-        }
-      }
-    }
+    const responseText = message.content
+      .filter(block => block.type === "text")
+      .map(block => block.text)
+      .join("");
 
-    console.log("Stream complete. Total chunks:", chunkCount);
     console.log("Claude response text length:", responseText.length);
     console.log("First 500 chars:", responseText.substring(0, 500));
     console.log("Last 500 chars:", responseText.substring(Math.max(0, responseText.length - 500)));
 
     if (!responseText) {
-      throw new Error("No content received from Claude API stream");
+      throw new Error("No content received from Claude API");
     }
 
     let generatedTips: any[];

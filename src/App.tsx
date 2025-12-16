@@ -27,6 +27,7 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedTopics, setSelectedTopics] = useState<Set<string>>(new Set());
+  const [selectedDifficulties, setSelectedDifficulties] = useState<Set<string>>(new Set());
   const [authMode, setAuthMode] = useState<AuthMode>('login');
   const [isPasswordRecovery, setIsPasswordRecovery] = useState(false);
   const [emailConfirmation, setEmailConfirmation] = useState<ConfirmationState>(null);
@@ -67,6 +68,7 @@ function App() {
         } else if (event === 'SIGNED_OUT') {
           setPreferencesLoaded(false);
           setSelectedTopics(new Set());
+          setSelectedDifficulties(new Set());
         }
       })();
     });
@@ -168,13 +170,22 @@ function App() {
   }, [posts]);
 
   const filteredPosts = useMemo(() => {
-    if (selectedTopics.size === 0) {
-      return posts;
+    let filtered = posts;
+
+    if (selectedTopics.size > 0) {
+      filtered = filtered.filter(post =>
+        post.primary_topic && selectedTopics.has(post.primary_topic)
+      );
     }
-    return posts.filter(post =>
-      post.primary_topic && selectedTopics.has(post.primary_topic)
-    );
-  }, [posts, selectedTopics]);
+
+    if (selectedDifficulties.size > 0) {
+      filtered = filtered.filter(post =>
+        post.difficulty && selectedDifficulties.has(post.difficulty)
+      );
+    }
+
+    return filtered;
+  }, [posts, selectedTopics, selectedDifficulties]);
 
   const scrollToTop = () => {
     if (scrollContainerRef.current) {
@@ -195,9 +206,23 @@ function App() {
     });
   };
 
+  const toggleDifficulty = (difficulty: string) => {
+    scrollToTop();
+    setSelectedDifficulties(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(difficulty)) {
+        newSet.delete(difficulty);
+      } else {
+        newSet.add(difficulty);
+      }
+      return newSet;
+    });
+  };
+
   const clearAllFilters = () => {
     scrollToTop();
     setSelectedTopics(new Set());
+    setSelectedDifficulties(new Set());
   };
 
   if (authLoading || loading) {
@@ -419,6 +444,8 @@ function App() {
           onSignOut={signOut}
           onShowProfile={() => setShowProfile(true)}
           topicGradients={topicGradients}
+          selectedDifficulties={selectedDifficulties}
+          onToggleDifficulty={toggleDifficulty}
         />
       )}
       <div ref={scrollContainerRef} className="h-screen overflow-y-scroll snap-y snap-mandatory scrollbar-hide bg-slate-950 pt-20">

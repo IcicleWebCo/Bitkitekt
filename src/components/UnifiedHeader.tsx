@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Filter, X, ChevronLeft, ChevronRight, Search, UserIcon, LogOut, Layers } from 'lucide-react';
+import { Filter, X, ChevronLeft, ChevronRight, Search, UserIcon, LogOut, Layers, GraduationCap } from 'lucide-react';
 
 interface TopicGradient {
   from: string;
@@ -20,11 +20,33 @@ interface UnifiedHeaderProps {
   onSignOut: () => void;
   onShowProfile: () => void;
   topicGradients?: Map<string, TopicGradient>;
+  selectedDifficulties: Set<string>;
+  onToggleDifficulty: (difficulty: string) => void;
 }
 
 const topicShortNames: Record<string, string> = {
   'Entity Framework Core': 'EF Core',
   '.NET 8+': '.NET 8+',
+};
+
+const difficultyLevels = ['Beginner', 'Intermediate', 'Advanced'];
+
+const difficultyColors: Record<string, { bg: string; border: string; text: string }> = {
+  'Beginner': {
+    bg: 'bg-green-500/20',
+    border: 'border-green-500/50',
+    text: 'text-green-300'
+  },
+  'Intermediate': {
+    bg: 'bg-yellow-500/20',
+    border: 'border-yellow-500/50',
+    text: 'text-yellow-300'
+  },
+  'Advanced': {
+    bg: 'bg-red-500/20',
+    border: 'border-red-500/50',
+    text: 'text-red-300'
+  }
 };
 
 export function UnifiedHeader({
@@ -39,6 +61,8 @@ export function UnifiedHeader({
   onSignOut,
   onShowProfile,
   topicGradients,
+  selectedDifficulties,
+  onToggleDifficulty,
 }: UnifiedHeaderProps) {
   const [isExpanded, setIsExpanded] = useState(true);
   const [showUserMenu, setShowUserMenu] = useState(false);
@@ -50,7 +74,7 @@ export function UnifiedHeader({
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const lastScrollY = useRef(0);
 
-  const hasFilters = selectedTopics.size > 0;
+  const hasFilters = selectedTopics.size > 0 || selectedDifficulties.size > 0;
   const filteredTopics = searchQuery
     ? topics.filter(t => t.toLowerCase().includes(searchQuery.toLowerCase()))
     : topics;
@@ -141,7 +165,7 @@ export function UnifiedHeader({
                     </div>
                     {hasFilters && (
                       <div className="absolute -top-1 -right-1 w-6 h-6 bg-gradient-to-br from-orange-500 to-red-500 rounded-full flex items-center justify-center shadow-lg shadow-orange-500/50 animate-pulse">
-                        <span className="text-xs font-bold text-white">{selectedTopics.size}</span>
+                        <span className="text-xs font-bold text-white">{selectedTopics.size + selectedDifficulties.size}</span>
                       </div>
                     )}
                   </button>
@@ -162,7 +186,7 @@ export function UnifiedHeader({
                     </span>
                     {hasFilters && (
                       <span className="flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-cyan-500/20 border border-cyan-400/30 text-xs font-bold text-cyan-400">
-                        {selectedTopics.size}
+                        {selectedTopics.size + selectedDifficulties.size}
                       </span>
                     )}
                   </button>
@@ -266,6 +290,36 @@ export function UnifiedHeader({
                         className="w-full pl-10 pr-4 py-2 bg-slate-800/50 border border-slate-700/50 rounded-lg text-sm text-slate-300 placeholder-slate-500 focus:outline-none focus:border-cyan-500/50 focus:bg-slate-800/70 transition-all duration-200"
                       />
                     </div>
+
+                    {/* Difficulty Filters */}
+                    <div className="flex items-center gap-2 px-3 py-2 bg-slate-800/50 rounded-lg border border-slate-700/50">
+                      <GraduationCap className="w-4 h-4 text-slate-400" />
+                      {difficultyLevels.map((difficulty) => {
+                        const isSelected = selectedDifficulties.has(difficulty);
+                        const colors = difficultyColors[difficulty];
+
+                        return (
+                          <button
+                            key={difficulty}
+                            onClick={() => onToggleDifficulty(difficulty)}
+                            className={`
+                              relative px-2.5 py-1 rounded-md transition-all duration-200
+                              text-xs font-medium whitespace-nowrap
+                              ${isSelected
+                                ? `${colors.bg} ${colors.border} ${colors.text} border`
+                                : 'bg-slate-700/30 text-slate-400 hover:bg-slate-700/50 hover:text-slate-300'
+                              }
+                            `}
+                          >
+                            {difficulty}
+                            {isSelected && (
+                              <div className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-white rounded-full animate-pulse" />
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+
                     {hasFilters && (
                       <button
                         onClick={onClearAll}
@@ -355,6 +409,19 @@ export function UnifiedHeader({
               <div className="max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 py-2">
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="text-xs text-slate-400 font-medium">Active:</span>
+                  {Array.from(selectedDifficulties).map((difficulty) => {
+                    const colors = difficultyColors[difficulty];
+                    return (
+                      <button
+                        key={difficulty}
+                        onClick={() => onToggleDifficulty(difficulty)}
+                        className={`group flex items-center gap-1.5 px-2 py-1 rounded-md ${colors.bg} hover:opacity-80 border ${colors.border} transition-all duration-200`}
+                      >
+                        <span className={`text-xs font-medium ${colors.text}`}>{difficulty}</span>
+                        <X className={`w-3 h-3 ${colors.text} opacity-60 group-hover:opacity-100 transition-opacity`} />
+                      </button>
+                    );
+                  })}
                   {Array.from(selectedTopics).map((topic) => {
                     const shortName = topicShortNames[topic] || topic;
                     return (
@@ -403,6 +470,48 @@ export function UnifiedHeader({
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="w-full pl-10 pr-4 py-2.5 bg-slate-800/50 border border-slate-700/50 rounded-lg text-sm text-slate-300 placeholder-slate-500 focus:outline-none focus:border-cyan-500/50 transition-all duration-200"
                   />
+                </div>
+              </div>
+
+              {/* Difficulty Filters */}
+              <div className="mb-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <GraduationCap className="w-4 h-4 text-slate-400" />
+                  <h4 className="text-sm font-semibold text-slate-300">Difficulty</h4>
+                </div>
+                <div className="grid grid-cols-3 gap-2">
+                  {difficultyLevels.map((difficulty) => {
+                    const isSelected = selectedDifficulties.has(difficulty);
+                    const colors = difficultyColors[difficulty];
+
+                    return (
+                      <button
+                        key={difficulty}
+                        onClick={() => onToggleDifficulty(difficulty)}
+                        className={`
+                          relative px-3 py-2.5 rounded-lg transition-all duration-200
+                          text-sm font-medium
+                          ${isSelected
+                            ? `${colors.bg} ${colors.border} ${colors.text} border`
+                            : 'bg-slate-700/30 text-slate-400 border border-slate-700/50'
+                          }
+                        `}
+                      >
+                        {difficulty}
+                        {isSelected && (
+                          <div className="absolute top-1 right-1 w-2 h-2 bg-white rounded-full animate-pulse" />
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Topic Filters */}
+              <div className="mb-2">
+                <div className="flex items-center gap-2 mb-2">
+                  <Filter className="w-4 h-4 text-slate-400" />
+                  <h4 className="text-sm font-semibold text-slate-300">Topics</h4>
                 </div>
               </div>
 

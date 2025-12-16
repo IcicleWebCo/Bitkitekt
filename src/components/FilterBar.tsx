@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Filter, X, ChevronDown, ChevronUp, Check } from 'lucide-react';
+import { Filter, X, ChevronDown, ChevronUp, Check, GraduationCap } from 'lucide-react';
 
 interface TopicGradient {
   from: string;
@@ -15,6 +15,8 @@ interface FilterBarProps {
   onClearAll: () => void;
   savingPreferences?: boolean;
   topicGradients?: Map<string, TopicGradient>;
+  selectedDifficulties: Set<string>;
+  onToggleDifficulty: (difficulty: string) => void;
 }
 
 const topicShortNames: Record<string, string> = {
@@ -22,9 +24,29 @@ const topicShortNames: Record<string, string> = {
   '.NET 8+': '.NET 8+',
 };
 
-export function FilterBar({ topics, selectedTopics, onToggleTopic, onClearAll, savingPreferences = false, topicGradients }: FilterBarProps) {
+const difficultyLevels = ['Beginner', 'Intermediate', 'Advanced'];
+
+const difficultyColors: Record<string, { bg: string; border: string; text: string }> = {
+  'Beginner': {
+    bg: 'bg-green-500/20',
+    border: 'border-green-500/50',
+    text: 'text-green-300'
+  },
+  'Intermediate': {
+    bg: 'bg-yellow-500/20',
+    border: 'border-yellow-500/50',
+    text: 'text-yellow-300'
+  },
+  'Advanced': {
+    bg: 'bg-red-500/20',
+    border: 'border-red-500/50',
+    text: 'text-red-300'
+  }
+};
+
+export function FilterBar({ topics, selectedTopics, onToggleTopic, onClearAll, savingPreferences = false, topicGradients, selectedDifficulties, onToggleDifficulty }: FilterBarProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const hasFilters = selectedTopics.size > 0;
+  const hasFilters = selectedTopics.size > 0 || selectedDifficulties.size > 0;
 
   return (
     <div className="fixed top-0 left-0 right-0 z-50 bg-slate-950/80 backdrop-blur-xl border-b border-slate-700/30 shadow-2xl transition-all duration-300">
@@ -90,8 +112,38 @@ export function FilterBar({ topics, selectedTopics, onToggleTopic, onClearAll, s
           <div className={`
             flex flex-wrap items-center gap-1.5 md:gap-2 flex-1 min-w-0
             transition-all duration-300 overflow-hidden
-            ${isCollapsed ? 'max-h-0 opacity-0' : 'max-h-20 opacity-100'}
+            ${isCollapsed ? 'max-h-0 opacity-0' : 'max-h-32 opacity-100'}
           `}>
+            {/* Difficulty Filters */}
+            <div className="flex items-center gap-1.5 md:gap-2 px-2 py-1 bg-slate-800/50 rounded-lg border border-slate-700/50">
+              <GraduationCap className="w-4 h-4 text-slate-400" />
+              {difficultyLevels.map((difficulty) => {
+                const isSelected = selectedDifficulties.has(difficulty);
+                const colors = difficultyColors[difficulty];
+
+                return (
+                  <button
+                    key={difficulty}
+                    onClick={() => onToggleDifficulty(difficulty)}
+                    className={`
+                      relative px-2.5 md:px-3 py-1 rounded-md transition-all duration-200
+                      text-xs md:text-sm font-medium whitespace-nowrap
+                      ${isSelected
+                        ? `${colors.bg} ${colors.border} ${colors.text} border`
+                        : 'bg-slate-700/30 text-slate-400 hover:bg-slate-700/50 hover:text-slate-300'
+                      }
+                    `}
+                  >
+                    {difficulty}
+                    {isSelected && (
+                      <div className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-white rounded-full animate-pulse" />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Topic Filters */}
             {topics.map((topic) => {
               const isSelected = selectedTopics.has(topic);
               const gradient = topicGradients?.get(topic);

@@ -284,39 +284,46 @@ Deno.serve(async (req) => {
       `\n--- PROMPT ${idx + 1} ---\n${content}\n--- END PROMPT ${idx + 1} ---\n`
     ).join("\n");
 
-    const systemPrompt = `You are a technical content generator. Generate exactly ${totalPostsNeeded} unique coding tips in JSON format.
+    const systemPrompt = `You are a technical content generator. Your output must be ONLY valid JSON with no additional text or formatting.
 
-Generate a valid JSON object containing a property named "tips". The "tips" property must be an array of exactly ${totalPostsNeeded} objects.
+CRITICAL OUTPUT REQUIREMENTS:
+- Start your response immediately with the opening brace {
+- End your response with the closing brace }
+- Do NOT include markdown code fences like \`\`\`json or \`\`\`
+- Do NOT include any explanatory text before or after the JSON
+- Do NOT include comments in the JSON
 
-Each object must strictly adhere to this schema:
-title: string (clear, concise title)
-summary: string (brief description)
-problem_solved: string (what problem this solves)
-upside: string (benefits and advantages)
-downside: string (drawbacks or limitations)
-risk_level: string ("Low", "Medium", or "High")
-performance_impact: string (performance considerations)
-doc_url: string (documentation URL or null)
-primary_topic: string (main technology/concept)
-syntax: string (programming language)
-code_snippets: array of objects, where each object has { "label": string, "language": string, "content": string }
-dependencies: array of strings (required dependencies, empty array if none)
-compatibility_min_version: string (or null)
-compatibility_deprecated_in: string (or null)
-tags: array of strings (relevant tags)
-difficulty: string ("Beginner", "Intermediate", or "Advanced")
+Generate a JSON object with a "tips" property containing exactly ${totalPostsNeeded} objects.
 
-IMPORTANT:
-- Generate EXACTLY ${totalPostsNeeded} tips (${postsPerFile} per prompt provided)
-- Output ONLY raw JSON
-- Do not enclose the output in markdown code blocks
-- Do not include any introductory or concluding text
-- Ensure all ${totalPostsNeeded} tips are unique and diverse
+Schema for each tip:
+{
+  "title": "string - clear, concise title",
+  "summary": "string - brief description",
+  "problem_solved": "string - what problem this solves",
+  "upside": "string - benefits and advantages",
+  "downside": "string - drawbacks or limitations",
+  "risk_level": "Low|Medium|High",
+  "performance_impact": "string - performance considerations",
+  "doc_url": "string or null - documentation URL",
+  "primary_topic": "string - main technology/concept",
+  "syntax": "string - programming language",
+  "code_snippets": [{"label": "string", "language": "string", "content": "string"}],
+  "dependencies": ["string array - required dependencies"],
+  "compatibility_min_version": "string or null",
+  "compatibility_deprecated_in": "string or null",
+  "tags": ["string array - relevant tags"],
+  "difficulty": "Beginner|Intermediate|Advanced"
+}
+
+REQUIREMENTS:
+- Generate EXACTLY ${totalPostsNeeded} tips (${postsPerFile} per prompt)
+- All tips must be unique and diverse
+- Response format: {"tips": [...]}
 
 DO NOT generate topics similar to:
 ${ignoreContextText}
 
-Return ONLY valid JSON, no markdown code blocks or extra text.`;
+Your entire response must be valid JSON that can be directly passed to JSON.parse().`;
 
     console.log("Calling Claude API with streaming...");
     const stream = await anthropic.messages.create({
@@ -358,14 +365,33 @@ Return ONLY valid JSON, no markdown code blocks or extra text.`;
 
     let generatedTips: any[];
     try {
-      const jsonMatch = responseText.match(/```(?:json)?\s*([\s\S]*?)```/);
-      const jsonText = jsonMatch ? jsonMatch[1] : responseText;
-      const parsed = JSON.parse(jsonText.trim());
+      let jsonText = responseText.trim();
+
+      // Try to extract JSON from markdown code blocks
+      const jsonMatch = jsonText.match(/```(?:json)?\s*([\s\S]*?)```/);
+      if (jsonMatch) {
+        jsonText = jsonMatch[1].trim();
+      }
+
+      // Remove any leading/trailing text that isn't JSON
+      // Find the first { and last }
+      const firstBrace = jsonText.indexOf('{');
+      const lastBrace = jsonText.lastIndexOf('}');
+
+      if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+        jsonText = jsonText.substring(firstBrace, lastBrace + 1);
+      }
+
+      console.log("Attempting to parse JSON, length:", jsonText.length);
+      console.log("First 200 chars of extracted JSON:", jsonText.substring(0, 200));
+
+      const parsed = JSON.parse(jsonText);
       generatedTips = parsed.tips || [];
       console.log("Parsed tips:", generatedTips.length);
     } catch (parseError) {
       console.error("Parse error:", parseError);
-      throw new Error("Failed to parse Claude response as JSON");
+      console.error("Failed text sample:", responseText.substring(0, 1000));
+      throw new Error("Failed to parse Claude response as JSON: " + (parseError instanceof Error ? parseError.message : String(parseError)));
     }
 
     if (!Array.isArray(generatedTips) || generatedTips.length === 0) {

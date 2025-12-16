@@ -9,9 +9,10 @@ import type { CommentWithProfile } from '../types/database';
 interface CommentSectionProps {
   postId: string;
   onSignIn?: () => void;
+  onCommentCountChange?: (count: number) => void;
 }
 
-export function CommentSection({ postId, onSignIn }: CommentSectionProps) {
+export function CommentSection({ postId, onSignIn, onCommentCountChange }: CommentSectionProps) {
   const { user } = useAuth();
   const [comments, setComments] = useState<CommentWithProfile[]>([]);
   const [loading, setLoading] = useState(true);
@@ -32,6 +33,7 @@ export function CommentSection({ postId, onSignIn }: CommentSectionProps) {
       ]);
       setComments(commentsData);
       setCommentCount(count);
+      onCommentCountChange?.(count);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load comments');
     } finally {

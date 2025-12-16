@@ -15,9 +15,10 @@ interface PostCardDetailProps {
   post: Post;
   scrollToComments?: boolean;
   onSignIn?: () => void;
+  onCommentCountChange?: (postId: string, count: number) => void;
 }
 
-export function PostCardDetail({ post, scrollToComments, onSignIn }: PostCardDetailProps) {
+export function PostCardDetail({ post, scrollToComments, onSignIn, onCommentCountChange }: PostCardDetailProps) {
   const [expandedSnippets, setExpandedSnippets] = useState<Set<number>>(new Set());
   const commentSectionRef = useRef<HTMLDivElement>(null);
 
@@ -252,7 +253,11 @@ export function PostCardDetail({ post, scrollToComments, onSignIn }: PostCardDet
           </div>
 
           <div ref={commentSectionRef}>
-            <CommentSection postId={post.id} onSignIn={onSignIn} />
+            <CommentSection
+              postId={post.id}
+              onSignIn={onSignIn}
+              onCommentCountChange={(count) => onCommentCountChange?.(post.id, count)}
+            />
           </div>
 
         </article>

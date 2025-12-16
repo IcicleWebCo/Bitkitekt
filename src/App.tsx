@@ -408,6 +408,13 @@ function App() {
               setAuthMode('login');
               setShowAuthModal(true);
             }}
+            onCommentCountChange={(postId, count) => {
+              setCommentCounts(prev => {
+                const newMap = new Map(prev);
+                newMap.set(postId, count);
+                return newMap;
+              });
+            }}
           />
         </div>
       </div>

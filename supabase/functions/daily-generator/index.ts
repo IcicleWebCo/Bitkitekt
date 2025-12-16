@@ -159,7 +159,7 @@ Deno.serve(async (req) => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
     const anthropicApiKey = Deno.env.get("ANTHROPIC_API_KEY");
-    const postsPerFile = parseInt(Deno.env.get("POSTS_PER_FILE") || "10");
+    const postsPerFile = parseInt(Deno.env.get("POSTS_PER_FILE") || "5");
 
     if (!anthropicApiKey) {
       throw new Error("ANTHROPIC_API_KEY not found in environment variables");

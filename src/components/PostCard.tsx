@@ -53,7 +53,7 @@ export function PostCard({ post, onViewDetail, onViewComments, commentCount }: P
                   onClick={onViewDetail}
                   className="flex items-center gap-2 px-4 py-2 bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 rounded-lg border border-cyan-500/50 transition-all hover:scale-105 hover:shadow-lg hover:shadow-cyan-500/20 font-medium text-sm whitespace-nowrap"
                 >
-                  <span>View Details</span>
+                  <span>Details</span>
                   <ArrowRight className="w-4 h-4" />
                 </button>
               )}

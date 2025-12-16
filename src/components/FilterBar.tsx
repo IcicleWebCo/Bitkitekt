@@ -32,12 +32,12 @@ const difficultyColors: Record<string, { bg: string; border: string; text: strin
     border: 'border-green-500/50',
     text: 'text-green-300'
   },
-  'Intermediate': {
+  'Junior': {
     bg: 'bg-yellow-500/20',
     border: 'border-yellow-500/50',
     text: 'text-yellow-300'
   },
-  'Advanced': {
+  'Senior': {
     bg: 'bg-red-500/20',
     border: 'border-red-500/50',
     text: 'text-red-300'

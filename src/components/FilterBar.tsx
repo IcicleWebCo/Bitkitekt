@@ -24,7 +24,7 @@ const topicShortNames: Record<string, string> = {
   '.NET 8+': '.NET 8+',
 };
 
-const difficultyLevels = ['Beginner', 'Intermediate', 'Advanced'];
+const difficultyLevels = ['Beginner', 'Junior', 'Senior'];
 
 const difficultyColors: Record<string, { bg: string; border: string; text: string }> = {
   'Beginner': {

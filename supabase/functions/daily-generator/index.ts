@@ -1,6 +1,7 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2.57.4";
 import Anthropic from "npm:@anthropic-ai/sdk";
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
@@ -34,50 +35,60 @@ const COLOR_PALETTE = [
   { from: 'lime-500', to: 'yellow-500', hoverFrom: 'lime-400', hoverTo: 'yellow-400' },
 ];
 
-async function ensureTopicExists(supabase: any, topicName: string) {
-  if (!topicName) return;
+async function ensureTopicsBulk(supabase: any, topicNames: string[]) {
+  if (!topicNames || topicNames.length === 0) return;
 
-  const { data: existing } = await supabase
+  const uniqueTopics = [...new Set(topicNames.filter(name => name))];
+
+  const { data: existingTopics } = await supabase
     .from('topics')
-    .select('id')
-    .eq('name', topicName)
-    .maybeSingle();
+    .select('name, id')
+    .in('name', uniqueTopics);
 
-  if (existing) return;
+  const existingNames = new Set(existingTopics?.map((t: any) => t.name) || []);
+  const topicsToCreate = uniqueTopics.filter(name => !existingNames.has(name));
+
+  if (topicsToCreate.length === 0) return;
 
   const { data: allTopics } = await supabase
     .from('topics')
     .select('id');
 
-  const topicCount = allTopics?.length || 0;
-  const colorIndex = topicCount % COLOR_PALETTE.length;
-  const colors = COLOR_PALETTE[colorIndex];
+  let startingIndex = allTopics?.length || 0;
 
-  await supabase
-    .from('topics')
-    .insert({
-      name: topicName,
+  const newTopics = topicsToCreate.map((name, idx) => {
+    const colorIndex = (startingIndex + idx) % COLOR_PALETTE.length;
+    const colors = COLOR_PALETTE[colorIndex];
+    return {
+      name,
       gradient_from: colors.from,
       gradient_to: colors.to,
       hover_gradient_from: colors.hoverFrom,
       hover_gradient_to: colors.hoverTo,
-    });
+    };
+  });
+
+  await supabase
+    .from('topics')
+    .insert(newTopics);
 }
-function levenshteinDistance(str1, str2) {
+
+function levenshteinDistance(str1: string, str2: string): number {
   const s1 = str1.toLowerCase();
   const s2 = str2.toLowerCase();
   const m = s1.length;
   const n = s2.length;
-  const dp = [];
-  for(let i = 0; i <= m; i++){
+  const dp: number[][] = [];
+
+  for (let i = 0; i <= m; i++) {
     dp[i] = [];
     dp[i][0] = i;
   }
-  for(let j = 0; j <= n; j++){
+  for (let j = 0; j <= n; j++) {
     dp[0][j] = j;
   }
-  for(let i = 1; i <= m; i++){
-    for(let j = 1; j <= n; j++){
+  for (let i = 1; i <= m; i++) {
+    for (let j = 1; j <= n; j++) {
       if (s1[i - 1] === s2[j - 1]) {
         dp[i][j] = dp[i - 1][j - 1];
       } else {
@@ -87,9 +98,10 @@ function levenshteinDistance(str1, str2) {
   }
   return dp[m][n];
 }
-function isSimilarToExisting(newTitle, existingTitles, threshold = 0.7) {
+
+function isSimilarToExisting(newTitle: string, existingTitles: string[], threshold = 0.7): boolean {
   const newTitleLower = newTitle.toLowerCase();
-  for (const existingTitle of existingTitles){
+  for (const existingTitle of existingTitles) {
     const existingLower = existingTitle.toLowerCase();
     if (newTitleLower.includes(existingLower) || existingLower.includes(newTitleLower)) {
       if (Math.abs(newTitleLower.length - existingLower.length) < 10) {
@@ -105,7 +117,8 @@ function isSimilarToExisting(newTitle, existingTitles, threshold = 0.7) {
   }
   return false;
 }
-Deno.serve(async (req)=>{
+
+Deno.serve(async (req) => {
   try {
     if (req.method === "OPTIONS") {
       return new Response(null, {
@@ -113,36 +126,44 @@ Deno.serve(async (req)=>{
         headers: corsHeaders
       });
     }
+
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
     const anthropicApiKey = Deno.env.get("ANTHROPIC_API_KEY");
+    const postsPerFile = parseInt(Deno.env.get("POSTS_PER_FILE") || "10");
+
     if (!anthropicApiKey) {
       throw new Error("ANTHROPIC_API_KEY not found in environment variables");
     }
+
     console.log("Starting daily content generation...");
-    console.log("Supabase URL:", supabaseUrl);
-    const supabase = createClient(supabaseUrl, supabaseServiceKey, {
+    console.log("Posts per file:", postsPerFile);
+
+    const supabase = createClient(supabaseUrl!, supabaseServiceKey!, {
       auth: {
         persistSession: false,
         autoRefreshToken: false
       }
     });
+
     const anthropic = new Anthropic({
       apiKey: anthropicApiKey
     });
+
     console.log("Listing files in content-prompts bucket...");
-    const { data: files, error: listError } = await supabase.storage.from("content-prompts").list("", {
-      limit: 100,
-      offset: 0,
-      sortBy: {
-        column: "name",
-        order: "asc"
-      }
-    });
+    const { data: files, error: listError } = await supabase.storage
+      .from("content-prompts")
+      .list("", {
+        limit: 100,
+        offset: 0,
+        sortBy: { column: "name", order: "asc" }
+      });
+
     if (listError) {
       console.error("List error:", listError);
       throw new Error("Failed to list prompt files: " + listError.message);
     }
+
     if (!files || files.length === 0) {
       console.log("No prompt files found in content-prompts bucket");
       return new Response(JSON.stringify({
@@ -156,59 +177,87 @@ Deno.serve(async (req)=>{
         }
       });
     }
-    console.log("Found files:", files.length, files.map((f)=>f.name));
-    const results = {
-      totalFiles: files.length,
-      processedFiles: 0,
-      totalInserted: 0,
-      errors: []
-    };
-    for (const file of files){
-      if (!file.name || file.name.endsWith('/') || !file.name.endsWith(".txt")) {
-        console.log("Skipping non-text file:", file.name);
-        continue;
-      }
+
+    const textFiles = files.filter(f => f.name && !f.name.endsWith('/') && f.name.endsWith(".txt"));
+    console.log("Found text files:", textFiles.length, textFiles.map(f => f.name));
+
+    if (textFiles.length === 0) {
+      return new Response(JSON.stringify({
+        message: "No valid text files found",
+        processed: 0
+      }), {
+        status: 200,
+        headers: {
+          ...corsHeaders,
+          "Content-Type": "application/json"
+        }
+      });
+    }
+
+    console.log("Loading all prompt files...");
+    const promptContents: string[] = [];
+
+    for (const file of textFiles) {
       try {
-        console.log("Processing file:", file.name);
-        const { data: urlData } = supabase.storage.from("content-prompts").getPublicUrl(file.name);
-        console.log("Public URL:", urlData.publicUrl);
-        const { data: fileData, error: downloadError } = await supabase.storage.from("content-prompts").download(file.name);
-        let promptText;
+        const { data: urlData } = supabase.storage
+          .from("content-prompts")
+          .getPublicUrl(file.name);
+
+        const { data: fileData, error: downloadError } = await supabase.storage
+          .from("content-prompts")
+          .download(file.name);
+
+        let promptText: string;
         if (downloadError) {
-          console.error("Download error:", downloadError);
-          console.log("Trying public URL fetch...");
+          console.log("Trying public URL fetch for:", file.name);
           const response = await fetch(urlData.publicUrl);
           if (!response.ok) {
             throw new Error("Failed to fetch file: " + response.status);
           }
           promptText = await response.text();
-          console.log("Fetched via public URL, length:", promptText.length);
         } else if (!fileData) {
           throw new Error("No data returned for file");
         } else {
           promptText = await fileData.text();
-          console.log("Downloaded successfully, length:", promptText.length);
         }
-        console.log("Loading recent posts for context...");
-        const { data: recentPosts, error: queryError } = await supabase.from("post").select("title, summary").order("created_at", {
-          ascending: false
-        }).limit(50);
-        if (queryError) {
-          throw new Error("Failed to query recent posts: " + queryError.message);
-        }
-        const ignoreContext = recentPosts || [];
-        const existingTitles = ignoreContext.map((p)=>p.title);
-        const ignoreContextText = ignoreContext.map((p)=>"- " + p.title + ": " + (p.summary || "(no summary)").substring(0, 150)).join("\n");
-        console.log("Loaded existing posts:", ignoreContext.length);
-        let inserted_count = 0;
-        let attempts = 0;
-        const maxAttempts = 20;
-        while(inserted_count < 5 && attempts < maxAttempts){
-          attempts++;
-          console.log("Attempt", attempts, "Need", 5 - inserted_count, "more posts");
-          const systemPrompt = `You are a technical content generator. Generate 5 coding tips in JSON format.
 
-Generate a valid JSON object containing a property named "tips". The "tips" property must be an array of 5 objects.
+        promptContents.push(promptText);
+        console.log("Loaded:", file.name, "length:", promptText.length);
+      } catch (fileError) {
+        console.error("Error loading file", file.name, fileError);
+      }
+    }
+
+    if (promptContents.length === 0) {
+      throw new Error("Failed to load any prompt files");
+    }
+
+    console.log("Loading recent posts for duplicate detection...");
+    const { data: recentPosts, error: queryError } = await supabase
+      .from("post")
+      .select("title, summary")
+      .order("created_at", { ascending: false })
+      .limit(100);
+
+    if (queryError) {
+      throw new Error("Failed to query recent posts: " + queryError.message);
+    }
+
+    const existingTitles = (recentPosts || []).map((p: any) => p.title);
+    const ignoreContextText = (recentPosts || [])
+      .map((p: any) => "- " + p.title + ": " + (p.summary || "(no summary)").substring(0, 150))
+      .join("\n");
+
+    const totalPostsNeeded = promptContents.length * postsPerFile;
+    console.log("Requesting", totalPostsNeeded, "posts from Claude API...");
+
+    const combinedPrompts = promptContents.map((content, idx) =>
+      `\n--- PROMPT ${idx + 1} ---\n${content}\n--- END PROMPT ${idx + 1} ---\n`
+    ).join("\n");
+
+    const systemPrompt = `You are a technical content generator. Generate exactly ${totalPostsNeeded} unique coding tips in JSON format.
+
+Generate a valid JSON object containing a property named "tips". The "tips" property must be an array of exactly ${totalPostsNeeded} objects.
 
 Each object must strictly adhere to this schema:
 title: string (clear, concise title)
@@ -229,116 +278,145 @@ tags: array of strings (relevant tags)
 difficulty: string ("Beginner", "Intermediate", or "Advanced")
 
 IMPORTANT:
-Output ONLY raw JSON.
-Do not enclose the output in markdown code blocks.
-Do not include any introductory or concluding text.
+- Generate EXACTLY ${totalPostsNeeded} tips (${postsPerFile} per prompt provided)
+- Output ONLY raw JSON
+- Do not enclose the output in markdown code blocks
+- Do not include any introductory or concluding text
+- Ensure all ${totalPostsNeeded} tips are unique and diverse
 
 DO NOT generate topics similar to:
 ${ignoreContextText}
 
 Return ONLY valid JSON, no markdown code blocks or extra text.`;
-          try {
-            const message = await anthropic.messages.create({
-              model: "claude-sonnet-4-20250514",
-              max_tokens: 20000,
-              temperature: 1,
-              messages: [
-                {
-                  role: "user",
-                  content: promptText
-                }
-              ],
-              system: systemPrompt
-            });
-            const responseText = message.content[0].type === "text" ? message.content[0].text : "";
-            console.log("Claude response preview:", responseText.substring(0, 150));
-            let generatedTips;
-            try {
-              const jsonMatch = responseText.match(/```(?:json)?\s*([\s\S]*?)```/);
-              const jsonText = jsonMatch ? jsonMatch[1] : responseText;
-              console.log("JSON text to parse:", jsonText.substring(0, 300));
-              const parsed = JSON.parse(jsonText.trim());
-              console.log("Parsed result:", JSON.stringify(parsed).substring(0, 500));
-              generatedTips = parsed.tips || [];
-              console.log("Tips extracted:", generatedTips.length);
-            } catch (parseError) {
-              console.error("Parse error:", parseError);
-              console.error("Response:", responseText.substring(0, 500));
-              continue;
-            }
-            if (!Array.isArray(generatedTips)) {
-              console.error("Failed to parse tips from JSON");
-              continue;
-            }
-            console.log("Generated tips:", generatedTips.length);
-            for (const tip of generatedTips){
-              if (inserted_count >= 5) break;
-              if (!tip.title) {
-                console.log("Skipping tip without title");
-                continue;
-              }
-              if (isSimilarToExisting(tip.title, existingTitles)) {
-                console.log("Duplicate detected:", tip.title);
-                continue;
-              }
-              const postData = {
-                title: tip.title,
-                summary: tip.summary,
-                problem_solved: tip.problem_solved,
-                upside: tip.upside,
-                downside: tip.downside,
-                risk_level: tip.risk_level,
-                performance_impact: tip.performance_impact,
-                doc_url: tip.doc_url,
-                primary_topic: tip.primary_topic,
-                syntax: tip.syntax,
-                code_snippets: tip.code_snippets || [],
-                dependencies: tip.dependencies || [],
-                compatibility_min_version: tip.compatibility_min_version,
-                compatibility_deprecated_in: tip.compatibility_deprecated_in,
-                tags: tip.tags || [],
-                last_verified: new Date().toISOString().split("T")[0],
-                difficulty: tip.difficulty
-              };
-              const { error: insertError } = await supabase.from("post").insert(postData);
-              if (insertError) {
-                console.error("Insert error:", tip.title, insertError.message);
-                continue;
-              }
-              console.log("Inserted:", tip.title);
 
-              await ensureTopicExists(supabase, tip.primary_topic);
+    const message = await anthropic.messages.create({
+      model: "claude-sonnet-4-20250514",
+      max_tokens: 50000,
+      temperature: 1,
+      messages: [
+        {
+          role: "user",
+          content: combinedPrompts
+        }
+      ],
+      system: systemPrompt
+    });
 
-              existingTitles.push(tip.title);
-              inserted_count++;
-              results.totalInserted++;
-            }
-          } catch (apiError) {
-            console.error("API call failed:", apiError);
-          }
-        }
-        if (inserted_count < 5) {
-          console.warn("Only inserted", inserted_count, "of 5 posts for", file.name);
-        } else {
-          console.log("Successfully inserted 5 posts for", file.name);
-        }
-        results.processedFiles++;
-      } catch (fileError) {
-        const errorMsg = "Error processing " + file.name + ": " + (fileError instanceof Error ? fileError.message : String(fileError));
-        console.error(errorMsg);
-        results.errors.push(errorMsg);
+    const responseText = message.content[0].type === "text" ? message.content[0].text : "";
+    console.log("Claude response received, length:", responseText.length);
+
+    let generatedTips: any[];
+    try {
+      const jsonMatch = responseText.match(/```(?:json)?\s*([\s\S]*?)```/);
+      const jsonText = jsonMatch ? jsonMatch[1] : responseText;
+      const parsed = JSON.parse(jsonText.trim());
+      generatedTips = parsed.tips || [];
+      console.log("Parsed tips:", generatedTips.length);
+    } catch (parseError) {
+      console.error("Parse error:", parseError);
+      throw new Error("Failed to parse Claude response as JSON");
+    }
+
+    if (!Array.isArray(generatedTips) || generatedTips.length === 0) {
+      throw new Error("No tips generated from Claude API");
+    }
+
+    console.log("Filtering and validating posts...");
+    const allExistingTitles = [...existingTitles];
+    const validPosts: any[] = [];
+
+    for (const tip of generatedTips) {
+      if (!tip.title) {
+        console.log("Skipping tip without title");
+        continue;
       }
+
+      if (isSimilarToExisting(tip.title, allExistingTitles)) {
+        console.log("Duplicate detected, skipping:", tip.title);
+        continue;
+      }
+
+      validPosts.push({
+        title: tip.title,
+        summary: tip.summary,
+        problem_solved: tip.problem_solved,
+        upside: tip.upside,
+        downside: tip.downside,
+        risk_level: tip.risk_level,
+        performance_impact: tip.performance_impact,
+        doc_url: tip.doc_url,
+        primary_topic: tip.primary_topic,
+        syntax: tip.syntax,
+        code_snippets: tip.code_snippets || [],
+        dependencies: tip.dependencies || [],
+        compatibility_min_version: tip.compatibility_min_version,
+        compatibility_deprecated_in: tip.compatibility_deprecated_in,
+        tags: tip.tags || [],
+        last_verified: new Date().toISOString().split("T")[0],
+        difficulty: tip.difficulty
+      });
+
+      allExistingTitles.push(tip.title);
     }
-    console.log("Content generation completed");
-    console.log("Processed:", results.processedFiles, "of", results.totalFiles);
-    console.log("Total inserted:", results.totalInserted);
-    if (results.errors.length > 0) {
-      console.log("Errors:", results.errors);
+
+    console.log("Valid posts after filtering:", validPosts.length);
+
+    if (validPosts.length === 0) {
+      return new Response(JSON.stringify({
+        success: true,
+        message: "No unique posts to insert (all were duplicates)",
+        totalInserted: 0,
+        processedFiles: textFiles.length
+      }), {
+        status: 200,
+        headers: {
+          ...corsHeaders,
+          "Content-Type": "application/json"
+        }
+      });
     }
+
+    const uniqueTopics = [...new Set(validPosts.map(p => p.primary_topic).filter(t => t))];
+    console.log("Creating topics:", uniqueTopics.length);
+    await ensureTopicsBulk(supabase, uniqueTopics);
+
+    console.log("Attempting bulk insert of", validPosts.length, "posts...");
+    const { error: bulkError } = await supabase
+      .from("post")
+      .insert(validPosts);
+
+    let insertedCount = 0;
+    let bulkInserted = false;
+
+    if (!bulkError) {
+      console.log("Bulk insert successful!");
+      insertedCount = validPosts.length;
+      bulkInserted = true;
+    } else {
+      console.warn("Bulk insert failed:", bulkError.message);
+      console.log("Falling back to individual inserts...");
+
+      for (const post of validPosts) {
+        const { error: insertError } = await supabase
+          .from("post")
+          .insert(post);
+
+        if (insertError) {
+          console.error("Failed to insert:", post.title, insertError.message);
+        } else {
+          insertedCount++;
+        }
+      }
+
+      console.log("Individual inserts completed:", insertedCount, "of", validPosts.length);
+    }
+
     return new Response(JSON.stringify({
       success: true,
-      ...results,
-      message: "Processed " + results.processedFiles + " files, inserted " + results.totalInserted + " posts"
+      totalInserted: insertedCount,
+      processedFiles: textFiles.length,
+      bulkInserted,
+      message: `Processed ${textFiles.length} files, inserted ${insertedCount} posts`
     }), {
       status: 200,
       headers: {
@@ -346,6 +424,7 @@ Return ONLY valid JSON, no markdown code blocks or extra text.`;
         "Content-Type": "application/json"
       }
     });
+
   } catch (error) {
     console.error("Fatal error:", error);
     return new Response(JSON.stringify({

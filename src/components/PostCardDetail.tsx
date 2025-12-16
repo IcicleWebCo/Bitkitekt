@@ -4,6 +4,7 @@ import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { CommentSection } from './CommentSection';
 import type { Post } from '../types/database';
+import PowerUpButton from './PowerUpButton';
 
 const riskColors = {
   Low: 'bg-green-500/20 text-green-300 border-green-500/50',
@@ -52,9 +53,12 @@ export function PostCardDetail({ post, scrollToComments, onSignIn, onCommentCoun
         <article className="bg-slate-900/50 backdrop-blur-xl border border-slate-700/50 rounded-xl md:rounded-2xl shadow-2xl p-4 sm:p-6 md:p-10 space-y-4 md:space-y-6">
 
           <header className="space-y-3 md:space-y-4 border-b border-slate-700/50 pb-4 md:pb-6">
-            <h2 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold text-white leading-tight">
-              {post.title}
-            </h2>
+            <div className="flex items-start gap-3 md:gap-4">
+              <h2 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold text-white leading-tight flex-1">
+                {post.title}
+              </h2>
+              <PowerUpButton postId={post.id} variant="detail" onAuthRequired={onSignIn} />
+            </div>
 
             <div className="flex flex-wrap items-center gap-2 md:gap-3 text-xs sm:text-sm">
               {post.primary_topic && (

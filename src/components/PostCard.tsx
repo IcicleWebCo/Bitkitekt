@@ -3,6 +3,7 @@ import { ExternalLink, AlertTriangle, TrendingUp, TrendingDown, Code2, Package, 
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import type { Post } from '../types/database';
+import PowerUpButton from './PowerUpButton';
 
 const riskColors = {
   Low: 'bg-green-500/20 text-green-300 border-green-500/50',
@@ -36,7 +37,11 @@ export function PostCard({ post, onViewDetail, onViewComments, commentCount }: P
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-cyan-900/20 via-transparent to-transparent" />
 
       <div className="max-w-5xl w-full relative z-10">
-        <article className="bg-slate-900/50 backdrop-blur-xl border border-slate-700/50 rounded-xl md:rounded-2xl shadow-2xl p-4 sm:p-6 md:p-10 space-y-4 md:space-y-6">
+        <article className="bg-slate-900/50 backdrop-blur-xl border border-slate-700/50 rounded-xl md:rounded-2xl shadow-2xl p-4 sm:p-6 md:p-10 space-y-4 md:space-y-6 relative">
+
+          <div className="absolute top-4 right-4 z-20">
+            <PowerUpButton postId={post.id} variant="card" />
+          </div>
 
           <header className="space-y-3 md:space-y-4 border-b border-slate-700/50 pb-4 md:pb-6">
             <div className="flex items-start justify-between gap-4">

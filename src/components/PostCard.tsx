@@ -39,7 +39,7 @@ export function PostCard({ post, onViewDetail, onViewComments, commentCount }: P
       <div className="max-w-5xl w-full relative z-10">
         <article className="bg-slate-900/50 backdrop-blur-xl border border-slate-700/50 rounded-xl md:rounded-2xl shadow-2xl p-4 sm:p-6 md:p-10 space-y-4 md:space-y-6 relative">
 
-          <div className="absolute top-4 right-4 z-20">
+          <div className="absolute top-20 right-4 sm:top-4 z-20">
             <PowerUpButton postId={post.id} variant="card" />
           </div>
 

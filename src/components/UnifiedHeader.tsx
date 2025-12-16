@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, forwardRef } from 'react';
 import { Filter, X, ChevronLeft, ChevronRight, Search, UserIcon, LogOut, Layers, GraduationCap } from 'lucide-react';
 import type { User } from '@supabase/supabase-js';
 import type { Profile } from '../types/database';
@@ -52,7 +52,7 @@ const difficultyColors: Record<string, { bg: string; border: string; text: strin
   }
 };
 
-export function UnifiedHeader({
+export const UnifiedHeader = forwardRef<HTMLElement, UnifiedHeaderProps>(function UnifiedHeader({
   topics,
   selectedTopics,
   onToggleTopic,
@@ -67,7 +67,7 @@ export function UnifiedHeader({
   selectedDifficulties,
   onToggleDifficulty,
   onScrollToTop,
-}: UnifiedHeaderProps) {
+}, ref) {
   const [isExpanded, setIsExpanded] = useState(true);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
@@ -138,6 +138,7 @@ export function UnifiedHeader({
   return (
     <>
       <header
+        ref={ref}
         className={`fixed top-0 left-0 right-0 z-50 transition-transform duration-300 ${
           isHeaderVisible ? 'translate-y-0' : '-translate-y-full'
         }`}
@@ -607,4 +608,4 @@ export function UnifiedHeader({
       `}</style>
     </>
   );
-}
+});

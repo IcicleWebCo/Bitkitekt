@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { FileCode, LogOut, User as UserIcon, ArrowLeft, Menu, X } from 'lucide-react';
 import { supabase } from './lib/supabase';
 import { postService } from './services/postService';
@@ -18,6 +18,7 @@ import { Profile } from './components/Profile';
 import { useAuth } from './contexts/AuthContext';
 import type { Post } from './types/database';
 import { TIMEOUTS } from './constants';
+import { useHeaderHeight } from './hooks/useHeaderHeight';
 
 type AuthMode = 'login' | 'register' | 'forgot-password';
 type ConfirmationState = { type: 'confirmed' | 'error'; message?: string } | null;
@@ -43,6 +44,8 @@ function App() {
   const [topicGradients, setTopicGradients] = useState<Map<string, TopicGradient>>(new Map());
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const headerRef = useRef<HTMLElement>(null);
+  const headerHeight = useHeaderHeight(headerRef, 80);
 
   useEffect(() => {
     loadPosts();
@@ -436,6 +439,7 @@ function App() {
     <>
       {uniqueTopics.length > 0 && (
         <UnifiedHeader
+          ref={headerRef}
           topics={uniqueTopics}
           selectedTopics={selectedTopics}
           onToggleTopic={toggleTopic}
@@ -455,7 +459,11 @@ function App() {
           onScrollToTop={scrollToTop}
         />
       )}
-      <div ref={scrollContainerRef} className="h-screen overflow-y-scroll snap-y snap-mandatory scrollbar-hide bg-slate-950 pt-20">
+      <div
+        ref={scrollContainerRef}
+        className="h-screen overflow-y-scroll snap-y snap-mandatory scrollbar-hide bg-slate-950 transition-[padding] duration-300 ease-out"
+        style={{ paddingTop: `${headerHeight + 16}px` }}
+      >
         {filteredPosts.length === 0 ? (
           <div className="h-screen w-full flex items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
             <div className="text-center">

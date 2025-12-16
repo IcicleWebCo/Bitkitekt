@@ -452,6 +452,7 @@ function App() {
           topicGradients={topicGradients}
           selectedDifficulties={selectedDifficulties}
           onToggleDifficulty={toggleDifficulty}
+          onScrollToTop={scrollToTop}
         />
       )}
       <div ref={scrollContainerRef} className="h-screen overflow-y-scroll snap-y snap-mandatory scrollbar-hide bg-slate-950 pt-20">

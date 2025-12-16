@@ -24,6 +24,7 @@ interface UnifiedHeaderProps {
   topicGradients?: Map<string, TopicGradient>;
   selectedDifficulties: Set<string>;
   onToggleDifficulty: (difficulty: string) => void;
+  onScrollToTop?: () => void;
 }
 
 const topicShortNames: Record<string, string> = {
@@ -65,6 +66,7 @@ export function UnifiedHeader({
   topicGradients,
   selectedDifficulties,
   onToggleDifficulty,
+  onScrollToTop,
 }: UnifiedHeaderProps) {
   const [isExpanded, setIsExpanded] = useState(true);
   const [showUserMenu, setShowUserMenu] = useState(false);
@@ -147,7 +149,7 @@ export function UnifiedHeader({
                 <div className="flex items-center gap-3 min-w-0">
                   <button
                     id="SiteName"
-                    onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                    onClick={() => onScrollToTop?.()}
                     className="md:flex items-center gap-2 px-3 py-2 rounded-xl bg-slate-800/40 border border-slate-700/40 hover:bg-slate-800/60 hover:border-slate-600/50 transition-all duration-200 cursor-pointer"
                   >
                     <Layers className="w-4 h-4 text-cyan-400" />

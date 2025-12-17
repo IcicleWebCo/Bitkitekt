@@ -4,6 +4,7 @@ import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { CommentSection } from './CommentSection';
 import { commentService } from '../services/commentService';
+import { useAuth } from '../contexts/AuthContext';
 import type { Post, CommentWithProfile } from '../types/database';
 import PowerUpButton from './PowerUpButton';
 
@@ -21,13 +22,14 @@ interface PostCardDetailProps {
 }
 
 export function PostCardDetail({ post, scrollToComments, onSignIn, onCommentCountChange }: PostCardDetailProps) {
+  const { user } = useAuth();
   const [expandedSnippets, setExpandedSnippets] = useState<Set<number>>(new Set());
   const [comments, setComments] = useState<CommentWithProfile[]>([]);
   const commentSectionRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     loadComments();
-  }, [post.id]);
+  }, [post.id, user?.id]);
 
   useEffect(() => {
     if (scrollToComments && commentSectionRef.current) {
@@ -42,7 +44,7 @@ export function PostCardDetail({ post, scrollToComments, onSignIn, onCommentCoun
 
   const loadComments = async () => {
     try {
-      const loadedComments = await commentService.getCommentsByPostId(post.id);
+      const loadedComments = await commentService.getCommentsByPostId(post.id, user?.id);
       setComments(loadedComments);
       const count = await commentService.getCommentCount(post.id);
       onCommentCountChange?.(post.id, count);
@@ -280,6 +282,7 @@ export function PostCardDetail({ post, scrollToComments, onSignIn, onCommentCoun
               onCommentAdded={loadComments}
               onCommentDeleted={loadComments}
               onCommentUpdated={loadComments}
+              onPowerUpToggled={loadComments}
               onSignIn={onSignIn}
             />
           </div>

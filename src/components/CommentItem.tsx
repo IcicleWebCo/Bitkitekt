@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Reply, Edit3, Trash2, User as UserIcon, ChevronDown, ChevronUp } from 'lucide-react';
+import { Reply, Edit3, Trash2, User as UserIcon, ChevronDown, ChevronUp, Zap } from 'lucide-react';
 import { CommentForm } from './CommentForm';
 import type { CommentWithProfile } from '../types/database';
 import { LIMITS } from '../constants';
@@ -10,6 +10,7 @@ interface CommentItemProps {
   onReply: (parentId: string, content: string) => Promise<void>;
   onEdit: (commentId: string, content: string) => Promise<void>;
   onDelete: (commentId: string) => Promise<void>;
+  onPowerUpToggle: (commentId: string, isPoweredUp: boolean) => Promise<void>;
   depth?: number;
 }
 
@@ -19,6 +20,7 @@ export function CommentItem({
   onReply,
   onEdit,
   onDelete,
+  onPowerUpToggle,
   depth = 0,
 }: CommentItemProps) {
   const [isReplying, setIsReplying] = useState(false);
@@ -28,6 +30,8 @@ export function CommentItem({
 
   const isOwner = currentUserId === comment.user_id;
   const canReply = depth < LIMITS.MAX_COMMENT_DEPTH;
+  const powerUpCount = comment.power_up_count || 0;
+  const isPoweredUp = comment.user_has_powered_up || false;
 
   const handleReply = async (content: string) => {
     await onReply(comment.id, content);
@@ -142,6 +146,26 @@ export function CommentItem({
 
         {!isEditing && !showDeleteConfirm && (
           <div className="flex items-center gap-2">
+            {currentUserId && (
+              <button
+                onClick={() => onPowerUpToggle(comment.id, isPoweredUp)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+                  isPoweredUp
+                    ? 'bg-cyan-500/20 text-cyan-400 hover:bg-cyan-500/30'
+                    : 'text-slate-400 hover:text-cyan-400 hover:bg-slate-700/50'
+                }`}
+                title={isPoweredUp ? 'Remove power up' : 'Power up'}
+              >
+                <Zap className={`w-3.5 h-3.5 ${isPoweredUp ? 'fill-cyan-400' : ''}`} />
+                {powerUpCount > 0 && <span>{powerUpCount}</span>}
+              </button>
+            )}
+            {!currentUserId && powerUpCount > 0 && (
+              <div className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-400">
+                <Zap className="w-3.5 h-3.5" />
+                <span>{powerUpCount}</span>
+              </div>
+            )}
             {canReply && currentUserId && (
               <button
                 onClick={() => setIsReplying(!isReplying)}
@@ -190,6 +214,7 @@ export function CommentItem({
               onReply={onReply}
               onEdit={onEdit}
               onDelete={onDelete}
+              onPowerUpToggle={onPowerUpToggle}
               depth={depth + 1}
             />
           ))}

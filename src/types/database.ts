@@ -61,10 +61,21 @@ export interface Comment {
 export interface CommentWithProfile extends Comment {
   profile: Profile;
   replies?: CommentWithProfile[];
+  power_up_count?: number;
+  user_has_powered_up?: boolean;
 }
 
 export type CommentInsert = Omit<Comment, 'id' | 'created_at' | 'updated_at' | 'deleted_at' | 'is_edited'>;
 export type CommentUpdate = Partial<Pick<Comment, 'content' | 'is_edited' | 'deleted_at'>>;
+
+export interface CommentLike {
+  id: string;
+  comment_id: string;
+  user_id: string;
+  created_at: string;
+}
+
+export type CommentLikeInsert = Omit<CommentLike, 'id' | 'created_at'>;
 
 export interface Topic {
   id: string;
@@ -159,6 +170,10 @@ export interface Database {
       poll_votes: {
         Row: PollVote;
         Insert: PollVoteInsert;
+      };
+      comment_likes: {
+        Row: CommentLike;
+        Insert: CommentLikeInsert;
       };
     };
   };

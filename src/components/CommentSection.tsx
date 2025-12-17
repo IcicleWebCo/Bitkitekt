@@ -13,6 +13,7 @@ interface CommentSectionProps {
   onCommentAdded: () => void;
   onCommentDeleted: () => void;
   onCommentUpdated: () => void;
+  onPowerUpToggled: () => void;
   onSignIn?: () => void;
 }
 
@@ -23,6 +24,7 @@ export function CommentSection({
   onCommentAdded,
   onCommentDeleted,
   onCommentUpdated,
+  onPowerUpToggled,
   onSignIn
 }: CommentSectionProps) {
   const { user } = useAuth();
@@ -93,6 +95,21 @@ export function CommentSection({
     }
   };
 
+  const handlePowerUpToggle = async (commentId: string, isPoweredUp: boolean) => {
+    if (!user) return;
+
+    try {
+      if (isPoweredUp) {
+        await commentService.removePowerUp(commentId, user.id);
+      } else {
+        await commentService.powerUpComment(commentId, user.id);
+      }
+      onPowerUpToggled();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to power up comment');
+    }
+  };
+
   return (
     <section className="mt-8 pt-8 border-t border-slate-700/50">
       <div className="space-y-6">
@@ -160,6 +177,7 @@ export function CommentSection({
                 onReply={handleReply}
                 onEdit={handleEdit}
                 onDelete={handleDelete}
+                onPowerUpToggle={handlePowerUpToggle}
               />
             ))}
           </div>

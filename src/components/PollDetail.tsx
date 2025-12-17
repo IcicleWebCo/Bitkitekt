@@ -31,7 +31,7 @@ export function PollDetail({ poll, scrollToComments, onSignIn, onCommentCountCha
       checkUserVote();
     }
     loadComments();
-  }, [user, poll.id]);
+  }, [user?.id, poll.id]);
 
   useEffect(() => {
     if (scrollToComments && commentsRef.current) {
@@ -63,7 +63,7 @@ export function PollDetail({ poll, scrollToComments, onSignIn, onCommentCountCha
 
   const loadComments = async () => {
     try {
-      const loadedComments = await commentService.getPollComments(poll.id);
+      const loadedComments = await commentService.getPollComments(poll.id, user?.id);
       setComments(loadedComments);
       const count = await commentService.getPollCommentCount(poll.id);
       setCommentCount(count);
@@ -231,6 +231,7 @@ export function PollDetail({ poll, scrollToComments, onSignIn, onCommentCountCha
             onCommentAdded={loadComments}
             onCommentDeleted={loadComments}
             onCommentUpdated={loadComments}
+            onPowerUpToggled={loadComments}
             onSignIn={onSignIn}
           />
         </div>

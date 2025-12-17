@@ -137,6 +137,15 @@ export type PollUpdate = Partial<PollInsert>;
 export type PollOptionInsert = Omit<PollOption, 'id' | 'created_at'>;
 export type PollVoteInsert = Omit<PollVote, 'id' | 'created_at'>;
 
+export interface PostStack {
+  id: string;
+  post_id: string;
+  user_id: string;
+  created_at: string;
+}
+
+export type PostStackInsert = Omit<PostStack, 'id' | 'created_at'>;
+
 export interface Database {
   public: {
     Tables: {
@@ -174,6 +183,10 @@ export interface Database {
       comment_likes: {
         Row: CommentLike;
         Insert: CommentLikeInsert;
+      };
+      post_stack: {
+        Row: PostStack;
+        Insert: PostStackInsert;
       };
     };
   };

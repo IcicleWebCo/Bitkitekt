@@ -7,6 +7,7 @@ import { commentService } from '../services/commentService';
 import { useAuth } from '../contexts/AuthContext';
 import type { Post, CommentWithProfile } from '../types/database';
 import PowerUpButton from './PowerUpButton';
+import PushButton from './PushButton';
 
 const riskColors = {
   Low: 'bg-green-500/20 text-green-300 border-green-500/50',
@@ -78,6 +79,7 @@ export function PostCardDetail({ post, scrollToComments, onSignIn, onCommentCoun
 
             <div className="flex flex-wrap items-center gap-2 md:gap-3 text-xs sm:text-sm">
               <PowerUpButton postId={post.id} variant="detail" onAuthRequired={onSignIn} />
+              <PushButton postId={post.id} variant="detail" onAuthRequired={onSignIn} />
 
               {post.primary_topic && (
                 <div className="inline-flex items-center gap-1 sm:gap-1.5 bg-cyan-500/10 text-cyan-300 px-2 sm:px-3 py-1 rounded-md border border-cyan-500/30">

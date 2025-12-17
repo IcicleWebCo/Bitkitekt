@@ -19,6 +19,7 @@ import { ResetPassword } from './components/ResetPassword';
 import { EmailConfirmation } from './components/EmailConfirmation';
 import { Profile } from './components/Profile';
 import { About } from './components/About';
+import { Stack } from './components/Stack';
 import { useAuth } from './contexts/AuthContext';
 import type { Post, PollWithOptions } from './types/database';
 import { TIMEOUTS } from './constants';
@@ -41,6 +42,7 @@ function App() {
   const [emailConfirmation, setEmailConfirmation] = useState<ConfirmationState>(null);
   const [showProfile, setShowProfile] = useState(false);
   const [showAbout, setShowAbout] = useState(false);
+  const [showStack, setShowStack] = useState(false);
   const [selectedPost, setSelectedPost] = useState<Post | null>(null);
   const [selectedPoll, setSelectedPoll] = useState<PollWithOptions | null>(null);
   const [scrollToComments, setScrollToComments] = useState(false);
@@ -417,6 +419,18 @@ function App() {
     return <About onBack={() => setShowAbout(false)} />;
   }
 
+  if (showStack) {
+    return (
+      <Stack
+        onViewPost={(post) => {
+          setShowStack(false);
+          setSelectedPost(post);
+        }}
+        onBack={() => setShowStack(false)}
+      />
+    );
+  }
+
   if (selectedPost) {
     return (
       <div className="min-h-screen bg-slate-950">
@@ -695,6 +709,7 @@ function App() {
           onSignOut={signOut}
           onShowProfile={() => setShowProfile(true)}
           onShowAbout={() => setShowAbout(true)}
+          onShowStack={() => setShowStack(true)}
           topicGradients={topicGradients}
           selectedDifficulties={selectedDifficulties}
           onToggleDifficulty={toggleDifficulty}

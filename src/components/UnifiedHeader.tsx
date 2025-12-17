@@ -22,6 +22,7 @@ interface UnifiedHeaderProps {
   onSignOut: () => void;
   onShowProfile: () => void;
   onShowAbout: () => void;
+  onShowStack: () => void;
   topicGradients?: Map<string, TopicGradient>;
   selectedDifficulties: Set<string>;
   onToggleDifficulty: (difficulty: string) => void;
@@ -66,6 +67,7 @@ export const UnifiedHeader = forwardRef<HTMLElement, UnifiedHeaderProps>(functio
   onSignOut,
   onShowProfile,
   onShowAbout,
+  onShowStack,
   topicGradients,
   selectedDifficulties,
   onToggleDifficulty,
@@ -279,6 +281,16 @@ export const UnifiedHeader = forwardRef<HTMLElement, UnifiedHeaderProps>(functio
                             >
                               <UserIcon className="w-4 h-4 text-slate-400 group-hover:text-cyan-400 transition-colors" />
                               <span className="text-sm font-medium">Profile</span>
+                            </button>
+                            <button
+                              onClick={() => {
+                                onShowStack();
+                                setShowUserMenu(false);
+                              }}
+                              className="w-full flex items-center gap-3 px-4 py-3 text-slate-300 hover:bg-slate-700/50 hover:text-white transition-all duration-200 text-left group"
+                            >
+                              <Layers className="w-4 h-4 text-slate-400 group-hover:text-blue-400 transition-colors" />
+                              <span className="text-sm font-medium">My Stack</span>
                             </button>
                             <button
                               onClick={() => {

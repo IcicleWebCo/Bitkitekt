@@ -4,6 +4,7 @@ import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import type { Post } from '../types/database';
 import PowerUpButton from './PowerUpButton';
+import PushButton from './PushButton';
 
 const riskColors = {
   Low: 'bg-green-500/20 text-green-300 border-green-500/50',
@@ -57,6 +58,7 @@ export function PostCard({ post, onViewDetail, onViewComments, commentCount }: P
 
             <div className="flex flex-wrap items-center gap-2 md:gap-3 text-xs sm:text-sm">
               <PowerUpButton postId={post.id} variant="card" />
+              <PushButton postId={post.id} variant="card" />
               {post.primary_topic && (
                 <div className="inline-flex items-center gap-1 sm:gap-1.5 bg-cyan-500/10 text-cyan-300 px-2 sm:px-3 py-1 rounded-md border border-cyan-500/30">
                   <Code2 className="w-3 h-3 sm:w-3.5 sm:h-3.5" />

@@ -179,9 +179,9 @@ Deno.serve(async (req) => {
     }
 
     const existingQuestions = (recentPolls || []).map((p: any) => p.question);
-    const ignoreContextText = (recentPolls || [])
-      .map((p: any) => "- " + p.question)
-      .join("\n");
+    const ignoreContextText = existingQuestions.length > 0 
+      ? (recentPolls || []).map((p: any) => "- " + p.question).join("\n")
+      : "(No existing polls yet)";
 
     const totalPollsNeeded = promptContents.length * pollsPerFile;
     console.log("Requesting", totalPollsNeeded, "polls from Claude API...");
@@ -190,22 +190,22 @@ Deno.serve(async (req) => {
       `\n--- PROMPT ${idx + 1} ---\n${content}\n--- END PROMPT ${idx + 1} ---\n`
     ).join("\n");
 
-    const systemPrompt = `You are a poll question generator. Your output must be ONLY valid JSON with no additional text or formatting.
+    const systemPrompt = `You are a poll question generator for developers. Your output must be ONLY valid JSON with no additional text.
 
 CRITICAL OUTPUT REQUIREMENTS:
 - Start your response immediately with the opening brace {
 - End your response with the closing brace }
-- Do NOT include markdown code fences like \`\`\`json or \`\`\`
-- Do NOT include any explanatory text before or after the JSON
-- Do NOT include comments in the JSON
+- Do NOT include markdown code fences
+- Do NOT include any explanatory text
+- Do NOT include comments
 
-Generate a JSON object with a "polls" property containing exactly ${totalPollsNeeded} poll objects.
+Generate exactly ${totalPollsNeeded} engaging poll questions.
 
 Schema for each poll:
 {
-  "question": "string - engaging, thought-provoking question",
-  "description": "string or null - optional context or elaboration",
-  "category": "string or null - optional category like 'Technology', 'Development', 'Career'",
+  "question": "string - engaging, thought-provoking question for developers",
+  "description": "string or null - optional context",
+  "category": "string or null - e.g., 'Technology', 'Development', 'Career'",
   "options": [
     {"text": "Option 1", "order": 0},
     {"text": "Option 2", "order": 1},
@@ -215,17 +215,16 @@ Schema for each poll:
 }
 
 REQUIREMENTS:
-- Generate EXACTLY ${totalPollsNeeded} polls (${pollsPerFile} per prompt)
-- Each poll must have between 2-6 options
-- Questions should be concise, engaging, and relevant to developers
-- All polls must be unique and diverse
-- Options should be mutually exclusive and cover different perspectives
+- Generate EXACTLY ${totalPollsNeeded} polls
+- Each poll must have 2-6 options
+- Questions should be concise and relevant to developers
+- Options should be mutually exclusive
 - Response format: {"polls": [...]}
 
 DO NOT generate questions similar to:
 ${ignoreContextText}
 
-Your entire response must be valid JSON that can be directly passed to JSON.parse().`;
+Your entire response must be valid JSON.`;
 
     console.log("Calling Claude API with streaming...");
     const stream = await anthropic.messages.create({
@@ -258,6 +257,8 @@ Your entire response must be valid JSON that can be directly passed to JSON.pars
 
     console.log("Stream complete. Total chunks:", chunkCount);
     console.log("Claude response text length:", responseText.length);
+    console.log("First 500 chars:", responseText.substring(0, 500));
+    console.log("Last 500 chars:", responseText.substring(Math.max(0, responseText.length - 500)));
 
     if (!responseText) {
       throw new Error("No content received from Claude API stream");
@@ -269,6 +270,7 @@ Your entire response must be valid JSON that can be directly passed to JSON.pars
 
       const jsonMatch = jsonText.match(/```(?:json)?\s*([\s\S]*?)```/);
       if (jsonMatch) {
+        console.log("Found markdown code fence, extracting JSON...");
         jsonText = jsonMatch[1].trim();
       }
 
@@ -280,18 +282,25 @@ Your entire response must be valid JSON that can be directly passed to JSON.pars
       }
 
       console.log("Attempting to parse JSON, length:", jsonText.length);
+      console.log("JSON to parse (first 200 chars):", jsonText.substring(0, 200));
 
       const parsed = JSON.parse(jsonText);
+      console.log("Parsed object keys:", Object.keys(parsed));
       generatedPolls = parsed.polls || [];
-      console.log("Parsed polls:", generatedPolls.length);
+      console.log("Parsed polls count:", generatedPolls.length);
+      
+      if (generatedPolls.length > 0) {
+        console.log("First poll sample:", JSON.stringify(generatedPolls[0], null, 2));
+      }
     } catch (parseError) {
       console.error("Parse error:", parseError);
-      console.error("Failed text sample:", responseText.substring(0, 1000));
+      console.error("Failed text sample (first 1000 chars):", responseText.substring(0, 1000));
       throw new Error("Failed to parse Claude response as JSON: " + (parseError instanceof Error ? parseError.message : String(parseError)));
     }
 
     if (!Array.isArray(generatedPolls) || generatedPolls.length === 0) {
-      throw new Error("No polls generated from Claude API");
+      console.error("No polls in generated response. Full response:", responseText);
+      throw new Error("No polls generated from Claude API. Check logs for details.");
     }
 
     console.log("Filtering and validating polls...");
@@ -300,7 +309,7 @@ Your entire response must be valid JSON that can be directly passed to JSON.pars
 
     for (const poll of generatedPolls) {
       if (!poll.question || !poll.options || !Array.isArray(poll.options) || poll.options.length < 2) {
-        console.log("Skipping poll with invalid structure");
+        console.log("Skipping poll with invalid structure:", JSON.stringify(poll));
         continue;
       }
 
@@ -318,7 +327,7 @@ Your entire response must be valid JSON that can be directly passed to JSON.pars
     if (validPolls.length === 0) {
       return new Response(JSON.stringify({
         success: true,
-        message: "No unique polls to insert (all were duplicates)",
+        message: "No unique polls to insert (all were duplicates or invalid)",
         totalInserted: 0,
         processedFiles: textFiles.length
       }), {

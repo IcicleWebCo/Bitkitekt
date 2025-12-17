@@ -286,9 +286,21 @@ Your entire response must be valid JSON.`;
 
       const parsed = JSON.parse(jsonText);
       console.log("Parsed object keys:", Object.keys(parsed));
-      generatedPolls = parsed.polls || [];
+
+      if (parsed.polls && Array.isArray(parsed.polls)) {
+        generatedPolls = parsed.polls;
+      } else if (parsed.type === "question" || (parsed.question && parsed.options)) {
+        console.log("Detected single poll format, wrapping in array");
+        generatedPolls = [parsed];
+      } else if (Array.isArray(parsed)) {
+        console.log("Detected array of polls");
+        generatedPolls = parsed;
+      } else {
+        generatedPolls = [];
+      }
+
       console.log("Parsed polls count:", generatedPolls.length);
-      
+
       if (generatedPolls.length > 0) {
         console.log("First poll sample:", JSON.stringify(generatedPolls[0], null, 2));
       }
@@ -318,7 +330,24 @@ Your entire response must be valid JSON.`;
         continue;
       }
 
-      validPolls.push(poll);
+      const normalizedOptions = poll.options.map((opt: any, idx: number) => {
+        if (typeof opt === 'string') {
+          return { text: opt, order: idx };
+        } else if (opt.text) {
+          return { text: opt.text, order: opt.order !== undefined ? opt.order : idx };
+        }
+        return null;
+      }).filter((opt: any) => opt !== null);
+
+      if (normalizedOptions.length < 2) {
+        console.log("Skipping poll with insufficient valid options:", JSON.stringify(poll));
+        continue;
+      }
+
+      validPolls.push({
+        ...poll,
+        options: normalizedOptions
+      });
       allExistingQuestions.push(poll.question);
     }
 

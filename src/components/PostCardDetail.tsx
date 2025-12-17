@@ -3,7 +3,8 @@ import { ExternalLink, AlertTriangle, TrendingUp, TrendingDown, Code2, Package, 
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { CommentSection } from './CommentSection';
-import type { Post } from '../types/database';
+import { commentService } from '../services/commentService';
+import type { Post, CommentWithProfile } from '../types/database';
 import PowerUpButton from './PowerUpButton';
 
 const riskColors = {
@@ -21,7 +22,12 @@ interface PostCardDetailProps {
 
 export function PostCardDetail({ post, scrollToComments, onSignIn, onCommentCountChange }: PostCardDetailProps) {
   const [expandedSnippets, setExpandedSnippets] = useState<Set<number>>(new Set());
+  const [comments, setComments] = useState<CommentWithProfile[]>([]);
   const commentSectionRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    loadComments();
+  }, [post.id]);
 
   useEffect(() => {
     if (scrollToComments && commentSectionRef.current) {
@@ -33,6 +39,17 @@ export function PostCardDetail({ post, scrollToComments, onSignIn, onCommentCoun
       }, 100);
     }
   }, [scrollToComments]);
+
+  const loadComments = async () => {
+    try {
+      const loadedComments = await commentService.getCommentsByPostId(post.id);
+      setComments(loadedComments);
+      const count = await commentService.getCommentCount(post.id);
+      onCommentCountChange?.(post.id, count);
+    } catch (err) {
+      console.error('Error loading comments:', err);
+    }
+  };
 
   const toggleSnippet = (idx: number) => {
     setExpandedSnippets(prev => {
@@ -257,9 +274,13 @@ export function PostCardDetail({ post, scrollToComments, onSignIn, onCommentCoun
 
           <div ref={commentSectionRef}>
             <CommentSection
-              postId={post.id}
+              itemId={post.id}
+              itemType="post"
+              comments={comments}
+              onCommentAdded={loadComments}
+              onCommentDeleted={loadComments}
+              onCommentUpdated={loadComments}
               onSignIn={onSignIn}
-              onCommentCountChange={(count) => onCommentCountChange?.(post.id, count)}
             />
           </div>
 

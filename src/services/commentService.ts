@@ -30,6 +30,34 @@ export const commentService = {
     return count || 0;
   },
 
+  async getPollComments(pollId: string): Promise<CommentWithProfile[]> {
+    const { data, error } = await supabase
+      .from('comments')
+      .select(`
+        *,
+        profile:profiles(*)
+      `)
+      .eq('poll_id', pollId)
+      .is('deleted_at', null)
+      .order('created_at', { ascending: true });
+
+    if (error) throw error;
+
+    const comments = (data || []) as unknown as CommentWithProfile[];
+    return buildCommentTree(comments);
+  },
+
+  async getPollCommentCount(pollId: string): Promise<number> {
+    const { count, error } = await supabase
+      .from('comments')
+      .select('*', { count: 'exact', head: true })
+      .eq('poll_id', pollId)
+      .is('deleted_at', null);
+
+    if (error) throw error;
+    return count || 0;
+  },
+
   async createComment(comment: CommentInsert): Promise<Comment> {
     const { data, error } = await supabase
       .from('comments')

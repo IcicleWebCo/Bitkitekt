@@ -128,7 +128,7 @@ export function PollCard({ poll, onViewDetail, onViewComments, commentCount }: P
                   className="inline-flex items-center gap-1 sm:gap-1.5 bg-fuchsia-500/20 hover:bg-fuchsia-500/30 text-fuchsia-300 px-2 sm:px-3 py-1 rounded-md border border-fuchsia-500/50 transition-all cursor-pointer"
                   title="View details"
                 >
-                  <span className="font-medium">Details</span>
+                  <span className="font-medium">Details & Comments</span>
                   <ArrowRight className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                 </button>
               )}

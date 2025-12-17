@@ -453,7 +453,7 @@ Your entire response must be valid JSON that can be directly passed to JSON.pars
       });
     }
 
-    const uniqueTopics = [...new Set(validPosts.map(p => p.primary_topic).filter(t => t))];
+    const uniqueTopics = [...new Set(validPosts.map(p => p.syntax).filter(t => t))];
     console.log("Creating topics:", uniqueTopics.length, uniqueTopics);
     await ensureTopicsBulk(supabase, uniqueTopics);
 

@@ -203,15 +203,18 @@ Generate exactly ${totalPollsNeeded} engaging poll questions.
 
 Schema for each poll:
 {
-  "question": "string - engaging, thought-provoking question for developers",
-  "description": "string or null - optional context",
-  "category": "string or null - e.g., 'Technology', 'Development', 'Career'",
+  "type": "question",
+  "question": "The text of the poll question",
   "options": [
-    {"text": "Option 1", "order": 0},
-    {"text": "Option 2", "order": 1},
-    {"text": "Option 3", "order": 2},
-    {"text": "Option 4", "order": 3}
-  ]
+    "Option A text",
+    "Option B text",
+    "Option C text",
+    "Option D text"
+  ],
+  "answer": "The Correct/Best Practice answer. exact copy of option that is correct.",
+  "topic": "The broad category",
+  "technology": "The specific language or stack",
+  "difficulty": "Beginner | Junior | Senior"
 }
 
 REQUIREMENTS:

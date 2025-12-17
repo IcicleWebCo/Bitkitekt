@@ -155,7 +155,7 @@ export const UnifiedHeader = forwardRef<HTMLElement, UnifiedHeaderProps>(functio
                   >
                     <Layers className="w-4 h-4 text-cyan-400" />
                     <span className="text-sm font-semibold bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">
-                      Bitkitect
+                      Bitkitekt
                     </span>
                   </button>
                   {/* Mobile: Filter count badge as toggle */}

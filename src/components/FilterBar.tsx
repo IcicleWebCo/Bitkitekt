@@ -22,6 +22,7 @@ interface FilterBarProps {
 const topicShortNames: Record<string, string> = {
   'Entity Framework Core': 'EF Core',
   '.NET 8+': '.NET 8+',
+  'csharp': 'C#'
 };
 
 const difficultyLevels = ['Beginner', 'Junior', 'Senior'];

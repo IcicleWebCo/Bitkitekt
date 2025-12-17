@@ -128,10 +128,10 @@ export function About({ onBack }: AboutProps) {
                   </h2>
                   <div className="text-slate-300 text-lg leading-relaxed space-y-4">
                     <p>
-                      My name is <span className="font-bold text-white">Corey Magin</span>. I am a Senior Software Engineer and the founder of Icicle Web Co. based in Wenatchee, WA.
+                      My name is <span className="font-bold text-white">Corey Magin</span>. I am a Senior Software Engineer and the founder of <a href="https://www.iciclewebco.com">Icicle Web Co.</a> based in Wenatchee, WA.
                     </p>
                     <p>
-                      When I am not architecting software solutions or wrestling with CSS grids, I am likely exploring the Pacific Northwest with my family or restoring vintage tools—a reminder that good things are built to last.
+                      When I am not architecting software solutions or wrestling with CSS grids, I am likely exploring the Pacific Northwest with my family or restoring second hand items—a reminder that good things are built to last.
                     </p>
                   </div>
                 </div>

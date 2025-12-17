@@ -72,10 +72,14 @@ export const UnifiedHeader = forwardRef<HTMLElement, UnifiedHeaderProps>(functio
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [isSearchExpanded, setIsSearchExpanded] = useState(false);
+  const [isMobileSearchExpanded, setIsMobileSearchExpanded] = useState(false);
   const [showScrollLeft, setShowScrollLeft] = useState(false);
   const [showScrollRight, setShowScrollRight] = useState(false);
   const [isHeaderVisible, setIsHeaderVisible] = useState(true);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const mobileSearchInputRef = useRef<HTMLInputElement>(null);
   const lastScrollY = useRef(0);
 
   const hasFilters = selectedTopics.size > 0 || selectedDifficulties.size > 0;
@@ -103,6 +107,18 @@ export const UnifiedHeader = forwardRef<HTMLElement, UnifiedHeaderProps>(functio
     window.addEventListener('scroll', throttledScroll, { passive: true });
     return () => window.removeEventListener('scroll', throttledScroll);
   }, []);
+
+  useEffect(() => {
+    if (isSearchExpanded && searchInputRef.current) {
+      searchInputRef.current.focus();
+    }
+  }, [isSearchExpanded]);
+
+  useEffect(() => {
+    if (isMobileSearchExpanded && mobileSearchInputRef.current) {
+      mobileSearchInputRef.current.focus();
+    }
+  }, [isMobileSearchExpanded]);
 
   useEffect(() => {
     const checkScroll = () => {
@@ -289,15 +305,32 @@ export const UnifiedHeader = forwardRef<HTMLElement, UnifiedHeaderProps>(functio
               >
                 <div className="pt-2 space-y-3">
                   <div className="flex items-center gap-2">
-                    <div className="relative flex-1 max-w-md">
-                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                      <input
-                        type="text"
-                        placeholder="Search filters..."
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full pl-10 pr-4 py-2 bg-slate-800/50 border border-slate-700/50 rounded-lg text-sm text-slate-300 placeholder-slate-500 focus:outline-none focus:border-cyan-500/50 focus:bg-slate-800/70 transition-all duration-200"
-                      />
+                    <div className={`relative transition-all duration-300 ${isSearchExpanded ? 'flex-1 max-w-xs' : 'w-auto'}`}>
+                      {!isSearchExpanded ? (
+                        <button
+                          onClick={() => setIsSearchExpanded(true)}
+                          className="p-2 bg-slate-800/50 hover:bg-slate-700/50 border border-slate-700/50 hover:border-cyan-500/50 rounded-lg transition-all duration-200"
+                        >
+                          <Search className="w-4 h-4 text-slate-400" />
+                        </button>
+                      ) : (
+                        <div className="relative">
+                          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                          <input
+                            ref={searchInputRef}
+                            type="text"
+                            placeholder="Search filters..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            onBlur={() => {
+                              if (!searchQuery) {
+                                setIsSearchExpanded(false);
+                              }
+                            }}
+                            className="w-full pl-10 pr-4 py-2 bg-slate-800/50 border border-slate-700/50 rounded-lg text-sm text-slate-300 placeholder-slate-500 focus:outline-none focus:border-cyan-500/50 focus:bg-slate-800/70 transition-all duration-200"
+                          />
+                        </div>
+                      )}
                     </div>
 
                     {/* Difficulty Filters */}
@@ -470,16 +503,31 @@ export const UnifiedHeader = forwardRef<HTMLElement, UnifiedHeaderProps>(functio
 
             <div className="p-4 overflow-y-auto flex-1">
               <div className="mb-4">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                  <input
-                    type="text"
-                    placeholder="Search filters..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2.5 bg-slate-800/50 border border-slate-700/50 rounded-lg text-sm text-slate-300 placeholder-slate-500 focus:outline-none focus:border-cyan-500/50 transition-all duration-200"
-                  />
-                </div>
+                {!isMobileSearchExpanded ? (
+                  <button
+                    onClick={() => setIsMobileSearchExpanded(true)}
+                    className="w-full p-2.5 bg-slate-800/50 hover:bg-slate-700/50 border border-slate-700/50 hover:border-cyan-500/50 rounded-lg transition-all duration-200 flex items-center justify-center"
+                  >
+                    <Search className="w-4 h-4 text-slate-400" />
+                  </button>
+                ) : (
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                    <input
+                      ref={mobileSearchInputRef}
+                      type="text"
+                      placeholder="Search filters..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      onBlur={() => {
+                        if (!searchQuery) {
+                          setIsMobileSearchExpanded(false);
+                        }
+                      }}
+                      className="w-full pl-10 pr-4 py-2.5 bg-slate-800/50 border border-slate-700/50 rounded-lg text-sm text-slate-300 placeholder-slate-500 focus:outline-none focus:border-cyan-500/50 transition-all duration-200"
+                    />
+                  </div>
+                )}
               </div>
 
               {/* Difficulty Filters */}

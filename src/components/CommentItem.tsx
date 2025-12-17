@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Reply, Edit3, Trash2, User as UserIcon } from 'lucide-react';
+import { Reply, Edit3, Trash2, User as UserIcon, ChevronDown, ChevronUp } from 'lucide-react';
 import { CommentForm } from './CommentForm';
 import type { CommentWithProfile } from '../types/database';
 import { LIMITS } from '../constants';
@@ -24,6 +24,7 @@ export function CommentItem({
   const [isReplying, setIsReplying] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [repliesExpanded, setRepliesExpanded] = useState(false);
 
   const isOwner = currentUserId === comment.user_id;
   const canReply = depth < LIMITS.MAX_COMMENT_DEPTH;
@@ -150,6 +151,19 @@ export function CommentItem({
                 Reply
               </button>
             )}
+            {comment.replies && comment.replies.length > 0 && (
+              <button
+                onClick={() => setRepliesExpanded(!repliesExpanded)}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-400 hover:text-cyan-400 hover:bg-slate-700/50 rounded-md transition-colors"
+              >
+                {repliesExpanded ? (
+                  <ChevronUp className="w-3.5 h-3.5" />
+                ) : (
+                  <ChevronDown className="w-3.5 h-3.5" />
+                )}
+                {repliesExpanded ? 'Hide' : 'Show'} {comment.replies.length} {comment.replies.length === 1 ? 'reply' : 'replies'}
+              </button>
+            )}
           </div>
         )}
 
@@ -166,7 +180,7 @@ export function CommentItem({
         )}
       </div>
 
-      {comment.replies && comment.replies.length > 0 && (
+      {comment.replies && comment.replies.length > 0 && repliesExpanded && (
         <div className="mt-3 space-y-3">
           {comment.replies.map((reply) => (
             <CommentItem

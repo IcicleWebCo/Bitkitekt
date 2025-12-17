@@ -58,6 +58,12 @@ function App() {
   }, []);
 
   useEffect(() => {
+    if (!authLoading) {
+      loadPosts();
+    }
+  }, [user?.id, authLoading]);
+
+  useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       (async () => {
         if (event === 'PASSWORD_RECOVERY') {
@@ -136,7 +142,7 @@ function App() {
     try {
       const [postsData, pollsData] = await Promise.all([
         postService.getAllPosts(),
-        pollService.getActivePolls()
+        pollService.getActivePolls(user?.id)
       ]);
 
       setPosts(postsData);
@@ -592,6 +598,10 @@ function App() {
                 newMap.set(pollId, count);
                 return newMap;
               });
+            }}
+            onVoteSubmitted={() => {
+              setSelectedPoll(null);
+              loadPosts();
             }}
           />
         </div>

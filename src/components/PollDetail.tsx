@@ -11,9 +11,10 @@ interface PollDetailProps {
   scrollToComments?: boolean;
   onSignIn: () => void;
   onCommentCountChange?: (pollId: string, count: number) => void;
+  onVoteSubmitted?: () => void;
 }
 
-export function PollDetail({ poll, scrollToComments, onSignIn, onCommentCountChange }: PollDetailProps) {
+export function PollDetail({ poll, scrollToComments, onSignIn, onCommentCountChange, onVoteSubmitted }: PollDetailProps) {
   const { user } = useAuth();
   const [hasVoted, setHasVoted] = useState(false);
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
@@ -95,6 +96,8 @@ export function PollDetail({ poll, scrollToComments, onSignIn, onCommentCountCha
         setResults(pollResults);
         setShowResults(true);
       }
+
+      onVoteSubmitted?.();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to submit vote');
     } finally {

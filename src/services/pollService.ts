@@ -2,7 +2,7 @@ import { supabase } from '../lib/supabase';
 import type { Poll, PollOption, PollWithOptions, PollResults, PollOptionWithVotes, PollVoteInsert } from '../types/database';
 
 export const pollService = {
-  async getActivePolls(): Promise<PollWithOptions[]> {
+  async getActivePolls(userId?: string): Promise<PollWithOptions[]> {
     const { data: polls, error: pollsError } = await supabase
       .from('polls')
       .select('*')
@@ -17,8 +17,24 @@ export const pollService = {
       return [];
     }
 
+    let filteredPolls = polls;
+
+    if (userId) {
+      const { data: userVotes, error: votesError } = await supabase
+        .from('poll_votes')
+        .select('poll_id')
+        .eq('user_id', userId);
+
+      if (votesError) {
+        console.error('Failed to fetch user votes:', votesError);
+      } else if (userVotes) {
+        const votedPollIds = new Set(userVotes.map(vote => vote.poll_id));
+        filteredPolls = polls.filter(poll => !votedPollIds.has(poll.id));
+      }
+    }
+
     const pollsWithOptions = await Promise.all(
-      polls.map(async (poll) => {
+      filteredPolls.map(async (poll) => {
         const { data: options, error: optionsError } = await supabase
           .from('poll_options')
           .select('*')

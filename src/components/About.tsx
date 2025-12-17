@@ -116,8 +116,8 @@ export function About({ onBack }: AboutProps) {
               <div className="grid md:grid-cols-2 gap-0">
                 <div className="order-2 md:order-1">
                   <img
-                    src="https://images.pexels.com/photos/1181263/pexels-photo-1181263.jpeg?auto=compress&cs=tinysrgb&w=800"
-                    alt="Coding workspace"
+                    src={`${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/images/profile.jpg`}
+                    alt="Corey Magin"
                     className="w-full h-full object-cover min-h-[300px]"
                   />
                 </div>

@@ -18,6 +18,7 @@ import { ForgotPassword } from './components/ForgotPassword';
 import { ResetPassword } from './components/ResetPassword';
 import { EmailConfirmation } from './components/EmailConfirmation';
 import { Profile } from './components/Profile';
+import { About } from './components/About';
 import { useAuth } from './contexts/AuthContext';
 import type { Post, PollWithOptions } from './types/database';
 import { TIMEOUTS } from './constants';
@@ -39,6 +40,7 @@ function App() {
   const [isPasswordRecovery, setIsPasswordRecovery] = useState(false);
   const [emailConfirmation, setEmailConfirmation] = useState<ConfirmationState>(null);
   const [showProfile, setShowProfile] = useState(false);
+  const [showAbout, setShowAbout] = useState(false);
   const [selectedPost, setSelectedPost] = useState<Post | null>(null);
   const [selectedPoll, setSelectedPoll] = useState<PollWithOptions | null>(null);
   const [scrollToComments, setScrollToComments] = useState(false);
@@ -370,6 +372,10 @@ function App() {
     return <Profile onBack={() => setShowProfile(false)} />;
   }
 
+  if (showAbout) {
+    return <About onBack={() => setShowAbout(false)} />;
+  }
+
   if (selectedPost) {
     return (
       <div className="min-h-screen bg-slate-950">
@@ -653,6 +659,7 @@ function App() {
           }}
           onSignOut={signOut}
           onShowProfile={() => setShowProfile(true)}
+          onShowAbout={() => setShowAbout(true)}
           topicGradients={topicGradients}
           selectedDifficulties={selectedDifficulties}
           onToggleDifficulty={toggleDifficulty}

@@ -21,6 +21,7 @@ interface UnifiedHeaderProps {
   onSignIn: () => void;
   onSignOut: () => void;
   onShowProfile: () => void;
+  onShowAbout: () => void;
   topicGradients?: Map<string, TopicGradient>;
   selectedDifficulties: Set<string>;
   onToggleDifficulty: (difficulty: string) => void;
@@ -63,6 +64,7 @@ export const UnifiedHeader = forwardRef<HTMLElement, UnifiedHeaderProps>(functio
   onSignIn,
   onSignOut,
   onShowProfile,
+  onShowAbout,
   topicGradients,
   selectedDifficulties,
   onToggleDifficulty,
@@ -174,6 +176,14 @@ export const UnifiedHeader = forwardRef<HTMLElement, UnifiedHeaderProps>(functio
                       Bitkitekt
                     </span>
                   </button>
+                  <button
+                    onClick={onShowAbout}
+                    className="hidden md:flex items-center gap-2 px-3 py-2 rounded-xl bg-slate-800/40 border border-slate-700/40 hover:bg-slate-800/60 hover:border-slate-600/50 transition-all duration-200 cursor-pointer"
+                  >
+                    <span className="text-sm font-medium text-slate-300 hover:text-white transition-colors">
+                      About
+                    </span>
+                  </button>
                   {/* Mobile: Filter count badge as toggle */}
                   <button
                     onClick={() => setShowMobileFilters(!showMobileFilters)}
@@ -270,6 +280,16 @@ export const UnifiedHeader = forwardRef<HTMLElement, UnifiedHeaderProps>(functio
                             </button>
                             <button
                               onClick={() => {
+                                onShowAbout();
+                                setShowUserMenu(false);
+                              }}
+                              className="md:hidden w-full flex items-center gap-3 px-4 py-3 text-slate-300 hover:bg-slate-700/50 hover:text-white transition-all duration-200 text-left group"
+                            >
+                              <Layers className="w-4 h-4 text-slate-400 group-hover:text-cyan-400 transition-colors" />
+                              <span className="text-sm font-medium">About</span>
+                            </button>
+                            <button
+                              onClick={() => {
                                 onSignOut();
                                 setShowUserMenu(false);
                               }}
@@ -283,17 +303,27 @@ export const UnifiedHeader = forwardRef<HTMLElement, UnifiedHeaderProps>(functio
                       )}
                     </div>
                   ) : (
-                    <button
-                      onClick={onSignIn}
-                      className="group relative px-5 py-2.5 rounded-xl font-semibold text-sm text-white transition-all duration-300 shadow-lg hover:shadow-cyan-500/50 overflow-hidden"
-                    >
-                      <div className="absolute inset-0 bg-gradient-to-r from-cyan-500 to-blue-500 group-hover:from-cyan-400 group-hover:to-blue-400 transition-all duration-300" />
-                      <div className="absolute inset-0 bg-gradient-to-r from-cyan-400/0 via-white/25 to-cyan-400/0 translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-700" />
-                      <span className="relative flex items-center gap-2">
-                        <UserIcon className="w-4 h-4" />
-                        Sign In
-                      </span>
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={onShowAbout}
+                        className="md:hidden px-3 py-2 rounded-xl bg-slate-800/40 border border-slate-700/40 hover:bg-slate-800/60 hover:border-slate-600/50 transition-all duration-200"
+                      >
+                        <span className="text-sm font-medium text-slate-300 hover:text-white transition-colors">
+                          About
+                        </span>
+                      </button>
+                      <button
+                        onClick={onSignIn}
+                        className="group relative px-5 py-2.5 rounded-xl font-semibold text-sm text-white transition-all duration-300 shadow-lg hover:shadow-cyan-500/50 overflow-hidden"
+                      >
+                        <div className="absolute inset-0 bg-gradient-to-r from-cyan-500 to-blue-500 group-hover:from-cyan-400 group-hover:to-blue-400 transition-all duration-300" />
+                        <div className="absolute inset-0 bg-gradient-to-r from-cyan-400/0 via-white/25 to-cyan-400/0 translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-700" />
+                        <span className="relative flex items-center gap-2">
+                          <UserIcon className="w-4 h-4" />
+                          Sign In
+                        </span>
+                      </button>
+                    </div>
                   )}
                 </div>
               </div>

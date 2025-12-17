@@ -32,11 +32,14 @@ export interface Post {
 export type PostInsert = Omit<Post, 'id' | 'created_at' | 'updated_at'>;
 export type PostUpdate = Partial<PostInsert>;
 
+export type PollFrequency = 'frequent' | 'normal' | 'rare' | 'none';
+
 export interface Profile {
   id: string;
   username: string;
   email: string;
   filter_preferences: string[];
+  poll_frequency: PollFrequency;
   created_at: string;
   updated_at: string;
 }

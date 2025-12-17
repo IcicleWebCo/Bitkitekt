@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { User as UserIcon, Mail, Calendar, ArrowLeft, Edit2, Save, X, Filter, Trash2 } from 'lucide-react';
+import { User as UserIcon, Mail, Calendar, ArrowLeft, Edit2, Save, X, Filter, Trash2, BarChart3 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
-import { clearFilterPreferences } from '../services/userPreferencesService';
+import { clearFilterPreferences, savePollFrequency } from '../services/userPreferencesService';
+import type { PollFrequency } from '../types/database';
 
 interface ProfileProps {
   onBack: () => void;
@@ -16,6 +17,8 @@ export function Profile({ onBack }: ProfileProps) {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [clearingPreferences, setClearingPreferences] = useState(false);
+  const [pollFrequency, setPollFrequency] = useState<PollFrequency>(profile?.poll_frequency || 'normal');
+  const [savingPollFrequency, setSavingPollFrequency] = useState(false);
 
   const handleSave = async () => {
     if (!user || !profile) return;
@@ -63,6 +66,26 @@ export function Profile({ onBack }: ProfileProps) {
       setError(err instanceof Error ? err.message : 'Failed to clear preferences');
     } finally {
       setClearingPreferences(false);
+    }
+  };
+
+  const handlePollFrequencyChange = async (frequency: PollFrequency) => {
+    if (!user) return;
+
+    setError(null);
+    setSavingPollFrequency(true);
+    setPollFrequency(frequency);
+
+    try {
+      await savePollFrequency(user.id, frequency);
+      await refreshProfile();
+      setSuccess(true);
+      setTimeout(() => setSuccess(false), 3000);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to update poll frequency');
+      setPollFrequency(profile?.poll_frequency || 'normal');
+    } finally {
+      setSavingPollFrequency(false);
     }
   };
 
@@ -208,6 +231,64 @@ export function Profile({ onBack }: ProfileProps) {
                     })}
                   </p>
                 )}
+              </div>
+
+              <div className="bg-slate-900/50 rounded-xl p-6 border border-slate-700/30">
+                <label className="flex items-center gap-2 text-sm font-medium text-slate-400 mb-4">
+                  <BarChart3 className="w-4 h-4" />
+                  Poll Frequency in Feed
+                </label>
+                <p className="text-slate-500 text-sm mb-4">Choose how often you want to see polls in your feed</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    onClick={() => handlePollFrequencyChange('frequent')}
+                    disabled={savingPollFrequency}
+                    className={`p-4 rounded-lg border-2 transition-all text-left ${
+                      pollFrequency === 'frequent'
+                        ? 'border-cyan-500 bg-cyan-500/10'
+                        : 'border-slate-700 hover:border-slate-600 bg-slate-800/30'
+                    } disabled:opacity-50 disabled:cursor-not-allowed`}
+                  >
+                    <div className="font-medium text-white mb-1">Frequent</div>
+                    <div className="text-xs text-slate-400">Every 2-3 posts</div>
+                  </button>
+                  <button
+                    onClick={() => handlePollFrequencyChange('normal')}
+                    disabled={savingPollFrequency}
+                    className={`p-4 rounded-lg border-2 transition-all text-left ${
+                      pollFrequency === 'normal'
+                        ? 'border-cyan-500 bg-cyan-500/10'
+                        : 'border-slate-700 hover:border-slate-600 bg-slate-800/30'
+                    } disabled:opacity-50 disabled:cursor-not-allowed`}
+                  >
+                    <div className="font-medium text-white mb-1">Normal</div>
+                    <div className="text-xs text-slate-400">Every 4-5 posts</div>
+                  </button>
+                  <button
+                    onClick={() => handlePollFrequencyChange('rare')}
+                    disabled={savingPollFrequency}
+                    className={`p-4 rounded-lg border-2 transition-all text-left ${
+                      pollFrequency === 'rare'
+                        ? 'border-cyan-500 bg-cyan-500/10'
+                        : 'border-slate-700 hover:border-slate-600 bg-slate-800/30'
+                    } disabled:opacity-50 disabled:cursor-not-allowed`}
+                  >
+                    <div className="font-medium text-white mb-1">Rare</div>
+                    <div className="text-xs text-slate-400">Every 8-10 posts</div>
+                  </button>
+                  <button
+                    onClick={() => handlePollFrequencyChange('none')}
+                    disabled={savingPollFrequency}
+                    className={`p-4 rounded-lg border-2 transition-all text-left ${
+                      pollFrequency === 'none'
+                        ? 'border-cyan-500 bg-cyan-500/10'
+                        : 'border-slate-700 hover:border-slate-600 bg-slate-800/30'
+                    } disabled:opacity-50 disabled:cursor-not-allowed`}
+                  >
+                    <div className="font-medium text-white mb-1">None</div>
+                    <div className="text-xs text-slate-400">Hide all polls</div>
+                  </button>
+                </div>
               </div>
             </div>
 

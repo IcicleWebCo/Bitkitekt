@@ -225,8 +225,23 @@ function App() {
       return [];
     }
 
+    const pollFrequency = profile?.poll_frequency || 'normal';
+
+    if (pollFrequency === 'none') {
+      postsToUse.forEach((post) => {
+        items.push({ type: 'post', data: post });
+      });
+      return items;
+    }
+
+    const frequencyMap = {
+      frequent: 3,
+      normal: 5,
+      rare: 9
+    };
+
     let pollIndex = 0;
-    const pollInterval = Math.max(3, Math.floor(postsToUse.length / Math.max(pollsToUse.length, 1)));
+    const pollInterval = frequencyMap[pollFrequency];
 
     postsToUse.forEach((post, index) => {
       items.push({ type: 'post', data: post });
@@ -243,7 +258,7 @@ function App() {
     }
 
     return items;
-  }, [filteredPosts, polls]);
+  }, [filteredPosts, polls, profile?.poll_frequency]);
 
   const scrollToTop = () => {
     if (scrollContainerRef.current) {

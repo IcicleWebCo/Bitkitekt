@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase';
+import type { PollFrequency } from '../types/database';
 
 export async function saveFilterPreferences(userId: string, preferences: string[]): Promise<void> {
   const { error } = await supabase
@@ -39,5 +40,19 @@ export async function clearFilterPreferences(userId: string): Promise<void> {
 
   if (error) {
     throw new Error(`Failed to clear filter preferences: ${error.message}`);
+  }
+}
+
+export async function savePollFrequency(userId: string, frequency: PollFrequency): Promise<void> {
+  const { error } = await supabase
+    .from('profiles')
+    .update({
+      poll_frequency: frequency,
+      updated_at: new Date().toISOString()
+    })
+    .eq('id', userId);
+
+  if (error) {
+    throw new Error(`Failed to save poll frequency: ${error.message}`);
   }
 }

@@ -56,3 +56,31 @@ export async function savePollFrequency(userId: string, frequency: PollFrequency
     throw new Error(`Failed to save poll frequency: ${error.message}`);
   }
 }
+
+export async function saveDifficultyPreferences(userId: string, preferences: string[]): Promise<void> {
+  const { error } = await supabase
+    .from('profiles')
+    .update({
+      difficulty_preferences: preferences,
+      updated_at: new Date().toISOString()
+    })
+    .eq('id', userId);
+
+  if (error) {
+    throw new Error(`Failed to save difficulty preferences: ${error.message}`);
+  }
+}
+
+export async function loadDifficultyPreferences(userId: string): Promise<string[]> {
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('difficulty_preferences')
+    .eq('id', userId)
+    .maybeSingle();
+
+  if (error) {
+    throw new Error(`Failed to load difficulty preferences: ${error.message}`);
+  }
+
+  return data?.difficulty_preferences || [];
+}

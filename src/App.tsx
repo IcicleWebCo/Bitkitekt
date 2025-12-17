@@ -4,7 +4,7 @@ import { supabase } from './lib/supabase';
 import { postService } from './services/postService';
 import { pollService } from './services/pollService';
 import { commentService } from './services/commentService';
-import { saveFilterPreferences } from './services/userPreferencesService';
+import { saveFilterPreferences, saveDifficultyPreferences } from './services/userPreferencesService';
 import { topicService } from './services/topicService';
 import type { TopicGradient } from './services/topicService';
 import { PostCard } from './components/PostCard';
@@ -96,23 +96,31 @@ function App() {
 
   useEffect(() => {
     if (profile && !preferencesLoaded) {
-      const preferences = profile.filter_preferences || [];
-      setSelectedTopics(new Set(preferences));
+      const topicPreferences = profile.filter_preferences || [];
+      const difficultyPreferences = profile.difficulty_preferences || [];
+      setSelectedTopics(new Set(topicPreferences));
+      setSelectedDifficulties(new Set(difficultyPreferences));
       setPreferencesLoaded(true);
     }
   }, [profile, preferencesLoaded]);
 
   useEffect(() => {
     if (profile && preferencesLoaded) {
-      const preferences = profile.filter_preferences || [];
-      const currentPreferences = Array.from(selectedTopics).sort().join(',');
-      const newPreferences = preferences.sort().join(',');
+      const topicPreferences = profile.filter_preferences || [];
+      const difficultyPreferences = profile.difficulty_preferences || [];
+      const currentTopicPreferences = Array.from(selectedTopics).sort().join(',');
+      const newTopicPreferences = topicPreferences.sort().join(',');
+      const currentDifficultyPreferences = Array.from(selectedDifficulties).sort().join(',');
+      const newDifficultyPreferences = difficultyPreferences.sort().join(',');
 
-      if (currentPreferences !== newPreferences) {
-        setSelectedTopics(new Set(preferences));
+      if (currentTopicPreferences !== newTopicPreferences) {
+        setSelectedTopics(new Set(topicPreferences));
+      }
+      if (currentDifficultyPreferences !== newDifficultyPreferences) {
+        setSelectedDifficulties(new Set(difficultyPreferences));
       }
     }
-  }, [profile?.filter_preferences, preferencesLoaded]);
+  }, [profile?.filter_preferences, profile?.difficulty_preferences, preferencesLoaded]);
 
   useEffect(() => {
     if (!user || !preferencesLoaded) return;
@@ -124,10 +132,13 @@ function App() {
     saveTimeoutRef.current = setTimeout(async () => {
       try {
         setSavingPreferences(true);
-        await saveFilterPreferences(user.id, Array.from(selectedTopics));
+        await Promise.all([
+          saveFilterPreferences(user.id, Array.from(selectedTopics)),
+          saveDifficultyPreferences(user.id, Array.from(selectedDifficulties))
+        ]);
         await refreshProfile();
       } catch (err) {
-        console.error('Failed to save filter preferences:', err);
+        console.error('Failed to save preferences:', err);
       } finally {
         setSavingPreferences(false);
       }
@@ -138,7 +149,7 @@ function App() {
         clearTimeout(saveTimeoutRef.current);
       }
     };
-  }, [selectedTopics, user, preferencesLoaded, refreshProfile]);
+  }, [selectedTopics, selectedDifficulties, user, preferencesLoaded, refreshProfile]);
 
   const loadPosts = async () => {
     try {

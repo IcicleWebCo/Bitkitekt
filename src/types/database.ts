@@ -39,6 +39,7 @@ export interface Profile {
   username: string;
   email: string;
   filter_preferences: string[];
+  difficulty_preferences: string[];
   poll_frequency: PollFrequency;
   created_at: string;
   updated_at: string;

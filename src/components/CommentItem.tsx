@@ -91,13 +91,13 @@ export function CommentItem({
               >
                 <Edit3 className="w-4 h-4" />
               </button>
-              <button
+              {/*<button
                 onClick={() => setShowDeleteConfirm(true)}
                 className="p-1.5 text-slate-400 hover:text-red-400 hover:bg-slate-700/50 rounded transition-colors"
                 title="Delete comment"
               >
                 <Trash2 className="w-4 h-4" />
-              </button>
+              </button>*/}
             </div>
           )}
         </div>

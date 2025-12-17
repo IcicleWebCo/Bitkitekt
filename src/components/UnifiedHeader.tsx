@@ -26,6 +26,7 @@ interface UnifiedHeaderProps {
   selectedDifficulties: Set<string>;
   onToggleDifficulty: (difficulty: string) => void;
   onScrollToTop?: () => void;
+  syntaxCounts?: Map<string, number>;
 }
 
 const topicShortNames: Record<string, string> = {
@@ -69,6 +70,7 @@ export const UnifiedHeader = forwardRef<HTMLElement, UnifiedHeaderProps>(functio
   selectedDifficulties,
   onToggleDifficulty,
   onScrollToTop,
+  syntaxCounts,
 }, ref) {
   const [isExpanded, setIsExpanded] = useState(true);
   const [showUserMenu, setShowUserMenu] = useState(false);
@@ -438,6 +440,7 @@ export const UnifiedHeader = forwardRef<HTMLElement, UnifiedHeaderProps>(functio
                           ? `from-${topicGrad.from} to-${topicGrad.to}`
                           : 'from-slate-500 to-slate-600';
                         const shortName = topicShortNames[topic] || topic;
+                        const count = syntaxCounts?.get(topic) || 0;
 
                         return (
                           <button
@@ -454,6 +457,9 @@ export const UnifiedHeader = forwardRef<HTMLElement, UnifiedHeaderProps>(functio
                             <div className="relative px-4 py-2 flex items-center gap-2">
                               <span className="text-sm font-semibold text-white whitespace-nowrap">
                                 {shortName}
+                              </span>
+                              <span className="flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-white/20 border border-white/30 text-xs font-bold text-white">
+                                {count}
                               </span>
                               {isSelected && (
                                 <div className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
@@ -610,6 +616,7 @@ export const UnifiedHeader = forwardRef<HTMLElement, UnifiedHeaderProps>(functio
                     ? `from-${topicGrad.from} to-${topicGrad.to}`
                     : 'from-slate-500 to-slate-600';
                   const shortName = topicShortNames[topic] || topic;
+                  const count = syntaxCounts?.get(topic) || 0;
 
                   return (
                     <button
@@ -623,13 +630,18 @@ export const UnifiedHeader = forwardRef<HTMLElement, UnifiedHeaderProps>(functio
                         isSelected ? 'opacity-100' : 'opacity-60'
                       } transition-opacity duration-300`} />
 
-                      <div className="relative px-3 py-3 flex items-center justify-center gap-2">
+                      <div className="relative px-3 py-3 flex flex-col items-center justify-center gap-1">
                         <span className="text-sm font-semibold text-white text-center">
                           {shortName}
                         </span>
-                        {isSelected && (
-                          <div className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
-                        )}
+                        <div className="flex items-center gap-2">
+                          <span className="flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-white/20 border border-white/30 text-xs font-bold text-white">
+                            {count}
+                          </span>
+                          {isSelected && (
+                            <div className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+                          )}
+                        </div>
                       </div>
                     </button>
                   );

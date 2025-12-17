@@ -190,14 +190,24 @@ function App() {
     }
   };
 
-  const uniqueTopics = useMemo(() => {
-    const topics = new Set<string>();
+  const uniqueSyntaxes = useMemo(() => {
+    const syntaxes = new Set<string>();
     posts.forEach(post => {
-      if (post.primary_topic) {
-        topics.add(post.primary_topic);
+      if (post.syntax) {
+        syntaxes.add(post.syntax);
       }
     });
-    return Array.from(topics).sort();
+    return Array.from(syntaxes).sort();
+  }, [posts]);
+
+  const syntaxCounts = useMemo(() => {
+    const counts = new Map<string, number>();
+    posts.forEach(post => {
+      if (post.syntax) {
+        counts.set(post.syntax, (counts.get(post.syntax) || 0) + 1);
+      }
+    });
+    return counts;
   }, [posts]);
 
   const filteredPosts = useMemo(() => {
@@ -205,7 +215,7 @@ function App() {
 
     if (selectedTopics.size > 0) {
       filtered = filtered.filter(post =>
-        post.primary_topic && selectedTopics.has(post.primary_topic)
+        post.syntax && selectedTopics.has(post.syntax)
       );
     }
 
@@ -657,10 +667,10 @@ function App() {
 
   return (
     <>
-      {uniqueTopics.length > 0 && (
+      {uniqueSyntaxes.length > 0 && (
         <UnifiedHeader
           ref={headerRef}
-          topics={uniqueTopics}
+          topics={uniqueSyntaxes}
           selectedTopics={selectedTopics}
           onToggleTopic={toggleTopic}
           onClearAll={clearAllFilters}
@@ -678,6 +688,7 @@ function App() {
           selectedDifficulties={selectedDifficulties}
           onToggleDifficulty={toggleDifficulty}
           onScrollToTop={scrollToTop}
+          syntaxCounts={syntaxCounts}
         />
       )}
       <div

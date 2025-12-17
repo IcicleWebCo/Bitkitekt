@@ -262,6 +262,26 @@ function App() {
     return items;
   }, [filteredPosts, polls, profile?.poll_frequency]);
 
+  useEffect(() => {
+    const handlePopState = (event: PopStateEvent) => {
+      if (selectedPost || selectedPoll) {
+        event.preventDefault();
+        setSelectedPost(null);
+        setSelectedPoll(null);
+        setScrollToComments(false);
+      }
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [selectedPost, selectedPoll]);
+
+  useEffect(() => {
+    if (selectedPost || selectedPoll) {
+      window.history.pushState({ view: 'detail' }, '');
+    }
+  }, [selectedPost, selectedPoll]);
+
   const scrollToTop = () => {
     if (scrollContainerRef.current) {
       scrollContainerRef.current.scrollTo({ top: 0, behavior: 'smooth' });
@@ -382,10 +402,7 @@ function App() {
         <div className="fixed top-0 left-0 right-0 z-[60] bg-slate-900/80 backdrop-blur-xl border-b border-slate-700/50 shadow-xl">
           <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
             <button
-              onClick={() => {
-                setSelectedPost(null);
-                setScrollToComments(false);
-              }}
+              onClick={() => window.history.back()}
               className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-lg transition-colors"
             >
               <ArrowLeft className="w-4 h-4" />
@@ -507,10 +524,7 @@ function App() {
         <div className="fixed top-0 left-0 right-0 z-[60] bg-slate-900/80 backdrop-blur-xl border-b border-slate-700/50 shadow-xl">
           <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
             <button
-              onClick={() => {
-                setSelectedPoll(null);
-                setScrollToComments(false);
-              }}
+              onClick={() => window.history.back()}
               className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-lg transition-colors"
             >
               <ArrowLeft className="w-4 h-4" />

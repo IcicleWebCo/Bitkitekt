@@ -19,12 +19,6 @@ interface FilterBarProps {
   onToggleDifficulty: (difficulty: string) => void;
 }
 
-const topicShortNames: Record<string, string> = {
-  'Entity Framework Core': 'EF Core',
-  '.NET 8+': '.NET 8+',
-  'csharp': 'C#'
-};
-
 const difficultyLevels = ['Beginner', 'Junior', 'Senior'];
 
 const difficultyColors: Record<string, { bg: string; border: string; text: string }> = {
@@ -151,7 +145,6 @@ export function FilterBar({ topics, selectedTopics, onToggleTopic, onClearAll, s
               const gradientClasses = gradient
                 ? `from-${gradient.from} to-${gradient.to} hover:from-${gradient.hoverFrom} hover:to-${gradient.hoverTo}`
                 : 'from-slate-500 to-slate-600 hover:from-slate-400 hover:to-slate-500';
-              const shortName = topicShortNames[topic] || topic;
 
               return (
                 <button
@@ -177,7 +170,7 @@ export function FilterBar({ topics, selectedTopics, onToggleTopic, onClearAll, s
                     ${isSelected ? 'text-white' : 'text-white/90'}
                   `}>
                     <span className="text-xs md:text-sm font-semibold whitespace-nowrap">
-                      {shortName}
+                      {topic}
                     </span>
                     {isSelected && (
                       <div className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-white animate-pulse" />

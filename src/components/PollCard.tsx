@@ -85,16 +85,16 @@ export function PollCard({ poll, onViewDetail, onViewComments, commentCount }: P
     <div className="min-h-screen w-full snap-start flex items-center justify-center p-3 sm:p-4 md:p-8 pt-20 sm:pt-24 bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900 relative">
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))] from-fuchsia-900/30 via-transparent to-transparent" />
 
-      <div className="max-w-5xl w-full relative z-10">
-        <article className="bg-slate-900/60 backdrop-blur-xl border border-fuchsia-500/30 rounded-xl md:rounded-2xl shadow-2xl p-4 sm:p-6 md:p-10 space-y-4 md:space-y-6 relative">
+      <div className="max-w-4xl w-full relative z-10">
+        <article className="bg-slate-900/60 backdrop-blur-xl border border-fuchsia-500/30 rounded-xl md:rounded-2xl shadow-2xl p-3 sm:p-4 md:p-7 space-y-3 md:space-y-4 relative">
 
           <div className="absolute top-4 right-4 bg-fuchsia-500/20 text-fuchsia-300 px-3 py-1 rounded-full text-xs font-semibold border border-fuchsia-500/50 flex items-center gap-1.5">
             <BarChart3 className="w-3.5 h-3.5" />
             POLL
           </div>
 
-          <header className="space-y-3 md:space-y-4 border-b border-slate-700/50 pb-4 md:pb-6">
-            <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-white leading-tight pr-20">
+          <header className="space-y-2 md:space-y-3 border-b border-slate-700/50 pb-3 md:pb-4">
+            <h2 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold text-white leading-tight pr-20">
               {poll.question}
             </h2>
 
@@ -135,7 +135,7 @@ export function PollCard({ poll, onViewDetail, onViewComments, commentCount }: P
             </div>
           </header>
 
-          <div className="space-y-3 md:space-y-4">
+          <div className="space-y-2 md:space-y-3">
             {!showResults ? (
               <>
                 {poll.options.map((option) => (
@@ -143,7 +143,7 @@ export function PollCard({ poll, onViewDetail, onViewComments, commentCount }: P
                     key={option.id}
                     onClick={() => handleVote(option.id)}
                     disabled={loading || hasVoted || !user}
-                    className={`w-full text-left p-4 md:p-5 rounded-lg border-2 transition-all ${
+                    className={`w-full text-left p-3 md:p-4 rounded-lg border-2 transition-all ${
                       loading || hasVoted
                         ? 'bg-slate-800/50 border-slate-700/50 cursor-not-allowed opacity-60'
                         : user
@@ -151,7 +151,7 @@ export function PollCard({ poll, onViewDetail, onViewComments, commentCount }: P
                         : 'bg-slate-800/30 border-slate-700/50 cursor-not-allowed opacity-50'
                     }`}
                   >
-                    <span className="text-base md:text-lg font-medium text-white">
+                    <span className="text-sm md:text-base font-medium text-white">
                       {option.option_text}
                     </span>
                   </button>
@@ -170,8 +170,8 @@ export function PollCard({ poll, onViewDetail, onViewComments, commentCount }: P
                 )}
               </>
             ) : results ? (
-              <div className="space-y-3 md:space-y-4">
-                <div className="text-center text-sm text-slate-400 pb-2 border-b border-slate-700/50">
+              <div className="space-y-2 md:space-y-3">
+                <div className="text-center text-xs md:text-sm text-slate-400 pb-2 border-b border-slate-700/50">
                   {results.total_votes} {results.total_votes === 1 ? 'vote' : 'votes'}
                 </div>
 
@@ -193,21 +193,21 @@ export function PollCard({ poll, onViewDetail, onViewComments, commentCount }: P
                         style={{ width: `${percentage}%` }}
                       />
 
-                      <div className="relative p-4 md:p-5 flex items-center justify-between">
+                      <div className="relative p-3 md:p-4 flex items-center justify-between">
                         <div className="flex items-center gap-2 flex-1 min-w-0">
                           {isUserChoice && (
-                            <CheckCircle className="w-5 h-5 text-fuchsia-400 flex-shrink-0" />
+                            <CheckCircle className="w-4 h-4 text-fuchsia-400 flex-shrink-0" />
                           )}
-                          <span className="text-base md:text-lg font-medium text-white truncate">
+                          <span className="text-sm md:text-base font-medium text-white truncate">
                             {option.option_text}
                           </span>
                         </div>
 
-                        <div className="flex items-center gap-3 flex-shrink-0 ml-4">
-                          <span className="text-sm text-slate-400">
+                        <div className="flex items-center gap-2 flex-shrink-0 ml-3">
+                          <span className="text-xs text-slate-400">
                             {option.vote_count}
                           </span>
-                          <span className="text-lg md:text-xl font-bold text-white min-w-[3rem] text-right">
+                          <span className="text-base md:text-lg font-bold text-white min-w-[2.5rem] text-right">
                             {percentage}%
                           </span>
                         </div>

@@ -107,6 +107,7 @@ export function Register({ onToggleMode }: RegisterProps) {
           data: {
             username,
           },
+          emailRedirectTo: window.location.origin,
         },
       });
 

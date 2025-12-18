@@ -173,10 +173,10 @@ export const UnifiedHeader = forwardRef<HTMLElement, UnifiedHeaderProps>(functio
                   <button
                     id="SiteName"
                     onClick={() => onScrollToTop?.()}
-                    className="md:flex items-center gap-2 px-3 py-2 rounded-xl bg-slate-800/40 border border-slate-700/40 hover:bg-slate-800/60 hover:border-slate-600/50 transition-all duration-200 cursor-pointer"
+                    className="flex items-center gap-2 px-3 py-2 rounded-xl bg-slate-800/40 border border-slate-700/40 hover:bg-slate-800/60 hover:border-slate-600/50 transition-all duration-200 cursor-pointer"
                   >
                     <Layers className="w-4 h-4 text-cyan-400" />
-                    <span className="text-sm font-semibold bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">
+                    <span className="hidden sm:inline text-sm font-semibold bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">
                       Bitkitekt (beta)
                     </span>
                   </button>
@@ -328,13 +328,13 @@ export const UnifiedHeader = forwardRef<HTMLElement, UnifiedHeaderProps>(functio
                       </button>
                       <button
                         onClick={onSignIn}
-                        className="group relative px-5 py-2.5 rounded-xl font-semibold text-sm text-white transition-all duration-300 shadow-lg hover:shadow-cyan-500/50 overflow-hidden"
+                        className="group relative px-3 sm:px-5 py-2.5 rounded-xl font-semibold text-sm text-white transition-all duration-300 shadow-lg hover:shadow-cyan-500/50 overflow-hidden"
                       >
                         <div className="absolute inset-0 bg-gradient-to-r from-cyan-500 to-blue-500 group-hover:from-cyan-400 group-hover:to-blue-400 transition-all duration-300" />
                         <div className="absolute inset-0 bg-gradient-to-r from-cyan-400/0 via-white/25 to-cyan-400/0 translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-700" />
                         <span className="relative flex items-center gap-2">
                           <UserIcon className="w-4 h-4" />
-                          Sign In
+                          <span className="hidden sm:inline">Sign In</span>
                         </span>
                       </button>
                     </div>

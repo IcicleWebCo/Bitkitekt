@@ -57,6 +57,7 @@ function App() {
   const headerRef = useRef<HTMLElement>(null);
   const headerHeight = useHeaderHeight(headerRef, 80);
   const authEventProcessedRef = useRef<Set<string>>(new Set());
+  const pendingConfirmationRef = useRef<{ type: string; userId?: string } | null>(null);
 
   console.log('[App Render]', {
     emailConfirmation,
@@ -111,8 +112,10 @@ function App() {
     });
 
     if (accessToken && !authEventProcessedRef.current.has(accessToken)) {
-      console.log('[Auth Flow] Processing access token - clearing hash');
+      console.log('[Auth Flow] Processing access token - storing confirmation info and clearing hash');
       authEventProcessedRef.current.add(accessToken);
+      pendingConfirmationRef.current = { type: hashType || 'unknown' };
+      console.log('[Auth Flow] Stored pending confirmation:', pendingConfirmationRef.current);
       window.history.replaceState({}, document.title, window.location.pathname);
     } else if (accessToken) {
       console.log('[Auth Flow] Access token already processed');
@@ -141,8 +144,8 @@ function App() {
         }
 
         const hashParams = new URLSearchParams(window.location.hash.substring(1));
-        const confirmationType = hashParams.get('type');
-        const hasAccessToken = hashParams.has('access_token');
+        const confirmationType = hashParams.get('type') || pendingConfirmationRef.current?.type;
+        const hasAccessToken = hashParams.has('access_token') || !!pendingConfirmationRef.current;
 
         const userCreatedAt = new Date(session.user.created_at || '');
         const now = new Date();
@@ -156,8 +159,9 @@ function App() {
           accountAgeMinutes: accountAgeMinutes.toFixed(2),
           isEmailOrSignup: confirmationType === 'email' || confirmationType === 'signup',
           eventKey: `${confirmationType}-${session.user.id}`,
-          alreadyProcessed: authEventProcessedRef.current.has(`${confirmationType}-${session.user.id}`),
-          processedEvents: Array.from(authEventProcessedRef.current)
+          alreadyProcessed: authEventProcessedRef.current.has(`signup-${session.user.id}`),
+          processedEvents: Array.from(authEventProcessedRef.current),
+          pendingConfirmation: pendingConfirmationRef.current
         });
 
         const shouldShowConfirmation = (
@@ -168,6 +172,7 @@ function App() {
         if (shouldShowConfirmation) {
           console.log('[Auth Flow] ✅ SETTING EMAIL CONFIRMATION');
           authEventProcessedRef.current.add(`signup-${session.user.id}`);
+          pendingConfirmationRef.current = null;
           setEmailConfirmation({ type: 'confirmed' });
           window.history.replaceState({}, document.title, window.location.pathname);
           console.log('[Auth Flow] Email confirmation state set, hash cleared');
@@ -186,6 +191,7 @@ function App() {
         setSelectedTopics(new Set());
         setSelectedDifficulties(new Set());
         authEventProcessedRef.current.clear();
+        pendingConfirmationRef.current = null;
       } else {
         console.log('[Auth Flow] Other event:', event);
       }

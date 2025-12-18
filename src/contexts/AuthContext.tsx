@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, useCallback, ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, useCallback, ReactNode, useRef } from 'react';
 import { User } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
 import type { Profile } from '../types/database';
@@ -17,6 +17,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
+  const initialSessionChecked = useRef(false);
 
   const loadProfile = useCallback(async (userId: string, retryCount = 0) => {
     try {
@@ -51,6 +52,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }, 10000);
 
     supabase.auth.getSession().then(({ data: { session } }) => {
+      initialSessionChecked.current = true;
       setUser(session?.user ?? null);
       if (session?.user) {
         loadProfile(session.user.id);
@@ -60,6 +62,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!initialSessionChecked.current) {
+        return;
+      }
+
       (async () => {
         setUser(session?.user ?? null);
         if (session?.user) {

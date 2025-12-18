@@ -56,6 +56,7 @@ function App() {
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const headerRef = useRef<HTMLElement>(null);
   const headerHeight = useHeaderHeight(headerRef, 80);
+  const authEventProcessedRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     loadPosts();
@@ -77,29 +78,40 @@ function App() {
   }, [user?.id, authLoading]);
 
   useEffect(() => {
+    const hashParams = new URLSearchParams(window.location.hash.substring(1));
+    const accessToken = hashParams.get('access_token');
+
+    if (accessToken && !authEventProcessedRef.current.has(accessToken)) {
+      authEventProcessedRef.current.add(accessToken);
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      (async () => {
-        if (event === 'PASSWORD_RECOVERY') {
-          setIsPasswordRecovery(true);
-        } else if (event === 'SIGNED_IN' && session) {
-          if (isPasswordRecovery) {
-            setIsPasswordRecovery(false);
-          }
-          const hashParams = new URLSearchParams(window.location.hash.substring(1));
-          if (hashParams.get('type') === 'email' || hashParams.get('type') === 'signup') {
-            setEmailConfirmation({ type: 'confirmed' });
-            window.history.replaceState({}, document.title, window.location.pathname);
-          }
-        } else if (event === 'USER_UPDATED') {
-          if (isPasswordRecovery) {
-            setIsPasswordRecovery(false);
-          }
-        } else if (event === 'SIGNED_OUT') {
-          setPreferencesLoaded(false);
-          setSelectedTopics(new Set());
-          setSelectedDifficulties(new Set());
+      if (event === 'PASSWORD_RECOVERY') {
+        setIsPasswordRecovery(true);
+      } else if (event === 'SIGNED_IN' && session) {
+        if (isPasswordRecovery) {
+          setIsPasswordRecovery(false);
         }
-      })();
+        const hashParams = new URLSearchParams(window.location.hash.substring(1));
+        const confirmationType = hashParams.get('type');
+
+        if ((confirmationType === 'email' || confirmationType === 'signup') &&
+            !authEventProcessedRef.current.has(`${confirmationType}-${session.user.id}`)) {
+          authEventProcessedRef.current.add(`${confirmationType}-${session.user.id}`);
+          setEmailConfirmation({ type: 'confirmed' });
+          window.history.replaceState({}, document.title, window.location.pathname);
+        }
+      } else if (event === 'USER_UPDATED') {
+        if (isPasswordRecovery) {
+          setIsPasswordRecovery(false);
+        }
+      } else if (event === 'SIGNED_OUT') {
+        setPreferencesLoaded(false);
+        setSelectedTopics(new Set());
+        setSelectedDifficulties(new Set());
+        authEventProcessedRef.current.clear();
+      }
     });
 
     return () => subscription.unsubscribe();

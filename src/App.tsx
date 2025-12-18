@@ -58,6 +58,24 @@ function App() {
   const headerHeight = useHeaderHeight(headerRef, 80);
   const authEventProcessedRef = useRef<Set<string>>(new Set());
 
+  console.log('[App Render]', {
+    emailConfirmation,
+    isPasswordRecovery,
+    authLoading,
+    loading,
+    hasUser: !!user,
+    showAuthModal,
+    showProfile,
+    showAbout,
+    showStack,
+    hasSelectedPost: !!selectedPost,
+    hasSelectedPoll: !!selectedPoll
+  });
+
+  useEffect(() => {
+    console.log('[Auth Flow] emailConfirmation state changed:', emailConfirmation);
+  }, [emailConfirmation]);
+
   useEffect(() => {
     loadPosts();
 
@@ -78,43 +96,94 @@ function App() {
   }, [user?.id, authLoading]);
 
   useEffect(() => {
+    console.log('[Auth Flow] useEffect initialized');
+    console.log('[Auth Flow] Current URL:', window.location.href);
+    console.log('[Auth Flow] Current hash:', window.location.hash);
+
     const hashParams = new URLSearchParams(window.location.hash.substring(1));
     const accessToken = hashParams.get('access_token');
+    const hashType = hashParams.get('type');
+
+    console.log('[Auth Flow] Hash params:', {
+      accessToken: accessToken ? `${accessToken.substring(0, 10)}...` : null,
+      type: hashType,
+      allParams: Object.fromEntries(hashParams.entries())
+    });
 
     if (accessToken && !authEventProcessedRef.current.has(accessToken)) {
+      console.log('[Auth Flow] Processing access token - clearing hash');
       authEventProcessedRef.current.add(accessToken);
       window.history.replaceState({}, document.title, window.location.pathname);
+    } else if (accessToken) {
+      console.log('[Auth Flow] Access token already processed');
     }
 
+    console.log('[Auth Flow] Setting up onAuthStateChange listener');
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log('[Auth Flow] onAuthStateChange triggered:', {
+        event,
+        hasSession: !!session,
+        userId: session?.user?.id,
+        isPasswordRecovery,
+        currentEmailConfirmation: emailConfirmation
+      });
+
       if (event === 'PASSWORD_RECOVERY') {
+        console.log('[Auth Flow] PASSWORD_RECOVERY event - setting isPasswordRecovery to true');
         setIsPasswordRecovery(true);
       } else if (event === 'SIGNED_IN' && session) {
+        console.log('[Auth Flow] SIGNED_IN event detected');
+
         if (isPasswordRecovery) {
+          console.log('[Auth Flow] Was password recovery, clearing flag');
           setIsPasswordRecovery(false);
         }
+
         const hashParams = new URLSearchParams(window.location.hash.substring(1));
         const confirmationType = hashParams.get('type');
 
+        console.log('[Auth Flow] Checking confirmation type:', {
+          confirmationType,
+          isEmailOrSignup: confirmationType === 'email' || confirmationType === 'signup',
+          eventKey: `${confirmationType}-${session.user.id}`,
+          alreadyProcessed: authEventProcessedRef.current.has(`${confirmationType}-${session.user.id}`),
+          processedEvents: Array.from(authEventProcessedRef.current)
+        });
+
         if ((confirmationType === 'email' || confirmationType === 'signup') &&
             !authEventProcessedRef.current.has(`${confirmationType}-${session.user.id}`)) {
+          console.log('[Auth Flow] ✅ SETTING EMAIL CONFIRMATION');
           authEventProcessedRef.current.add(`${confirmationType}-${session.user.id}`);
           setEmailConfirmation({ type: 'confirmed' });
           window.history.replaceState({}, document.title, window.location.pathname);
+          console.log('[Auth Flow] Email confirmation state set, hash cleared');
+        } else {
+          console.log('[Auth Flow] ❌ NOT setting email confirmation - condition not met');
         }
       } else if (event === 'USER_UPDATED') {
+        console.log('[Auth Flow] USER_UPDATED event');
         if (isPasswordRecovery) {
+          console.log('[Auth Flow] Was password recovery, clearing flag');
           setIsPasswordRecovery(false);
         }
       } else if (event === 'SIGNED_OUT') {
+        console.log('[Auth Flow] SIGNED_OUT event - clearing all state');
         setPreferencesLoaded(false);
         setSelectedTopics(new Set());
         setSelectedDifficulties(new Set());
         authEventProcessedRef.current.clear();
+      } else {
+        console.log('[Auth Flow] Other event:', event);
       }
     });
 
-    return () => subscription.unsubscribe();
+    console.log('[Auth Flow] Listener setup complete');
+
+    return () => {
+      console.log('[Auth Flow] Cleaning up subscription');
+      subscription.unsubscribe();
+    };
   }, [isPasswordRecovery]);
 
   useEffect(() => {
@@ -386,12 +455,16 @@ function App() {
   }
 
   if (emailConfirmation) {
+    console.log('[Auth Flow] Rendering EmailConfirmation component:', emailConfirmation);
     return (
       <div className="min-h-screen w-full bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4">
         <EmailConfirmation
           type={emailConfirmation.type}
           message={emailConfirmation.message}
-          onContinue={() => setEmailConfirmation(null)}
+          onContinue={() => {
+            console.log('[Auth Flow] EmailConfirmation onContinue clicked');
+            setEmailConfirmation(null);
+          }}
         />
       </div>
     );

@@ -142,19 +142,32 @@ function App() {
 
         const hashParams = new URLSearchParams(window.location.hash.substring(1));
         const confirmationType = hashParams.get('type');
+        const hasAccessToken = hashParams.has('access_token');
+
+        const userCreatedAt = new Date(session.user.created_at || '');
+        const now = new Date();
+        const accountAgeMinutes = (now.getTime() - userCreatedAt.getTime()) / 1000 / 60;
+        const isNewAccount = accountAgeMinutes < 5;
 
         console.log('[Auth Flow] Checking confirmation type:', {
           confirmationType,
+          hasAccessToken,
+          isNewAccount,
+          accountAgeMinutes: accountAgeMinutes.toFixed(2),
           isEmailOrSignup: confirmationType === 'email' || confirmationType === 'signup',
           eventKey: `${confirmationType}-${session.user.id}`,
           alreadyProcessed: authEventProcessedRef.current.has(`${confirmationType}-${session.user.id}`),
           processedEvents: Array.from(authEventProcessedRef.current)
         });
 
-        if ((confirmationType === 'email' || confirmationType === 'signup') &&
-            !authEventProcessedRef.current.has(`${confirmationType}-${session.user.id}`)) {
+        const shouldShowConfirmation = (
+          (confirmationType === 'email' || confirmationType === 'signup') ||
+          (hasAccessToken && isNewAccount)
+        ) && !authEventProcessedRef.current.has(`signup-${session.user.id}`);
+
+        if (shouldShowConfirmation) {
           console.log('[Auth Flow] ✅ SETTING EMAIL CONFIRMATION');
-          authEventProcessedRef.current.add(`${confirmationType}-${session.user.id}`);
+          authEventProcessedRef.current.add(`signup-${session.user.id}`);
           setEmailConfirmation({ type: 'confirmed' });
           window.history.replaceState({}, document.title, window.location.pathname);
           console.log('[Auth Flow] Email confirmation state set, hash cleared');

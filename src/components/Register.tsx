@@ -129,7 +129,7 @@ export function Register({ onToggleMode }: RegisterProps) {
           </div>
           <h2 className="text-2xl font-bold text-white">Account Created!</h2>
           <p className="text-slate-300">
-            Your account has been successfully created. You can now sign in.
+            Your account has been successfully created. Please confirm your email. I'll wait.
           </p>
           <button
             onClick={onToggleMode}

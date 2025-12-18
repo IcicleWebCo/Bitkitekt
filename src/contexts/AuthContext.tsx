@@ -1,15 +1,7 @@
 import { createContext, useContext, useEffect, useState, useCallback, ReactNode } from 'react';
 import { User } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
-
-interface Profile {
-  id: string;
-  username: string;
-  email: string;
-  filter_preferences: string[];
-  created_at: string;
-  updated_at: string;
-}
+import type { Profile } from '../types/database';
 
 interface AuthContextType {
   user: User | null;
@@ -26,7 +18,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const loadProfile = useCallback(async (userId: string) => {
+  const loadProfile = useCallback(async (userId: string, retryCount = 0) => {
     try {
       const { data, error } = await supabase
         .from('profiles')
@@ -35,15 +27,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .maybeSingle();
 
       if (error) throw error;
+
+      if (!data && retryCount < 3) {
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        return loadProfile(userId, retryCount + 1);
+      }
+
       setProfile(data);
     } catch (error) {
       console.error('Error loading profile:', error);
+      setProfile(null);
     } finally {
       setLoading(false);
     }
   }, []);
 
   useEffect(() => {
+    const loadingTimeout = setTimeout(() => {
+      if (loading) {
+        console.error('Auth loading timeout - forcing completion');
+        setLoading(false);
+      }
+    }, 10000);
+
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
       if (session?.user) {
@@ -65,7 +71,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       })();
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      subscription.unsubscribe();
+      clearTimeout(loadingTimeout);
+    };
   }, [loadProfile]);
 
   const signOut = async () => {

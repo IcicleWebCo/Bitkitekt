@@ -59,6 +59,15 @@ function App() {
 
   useEffect(() => {
     loadPosts();
+
+    const timeout = setTimeout(() => {
+      if (loading) {
+        console.error('Loading timeout - forcing completion');
+        setLoading(false);
+      }
+    }, 10000);
+
+    return () => clearTimeout(timeout);
   }, []);
 
   useEffect(() => {

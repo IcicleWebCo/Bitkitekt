@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { BarChart3, MessageCircle, ArrowRight, CheckCircle } from 'lucide-react';
 import { pollService } from '../services/pollService';
 import type { PollWithOptions, PollResults } from '../types/database';
@@ -20,21 +20,20 @@ export function PollCard({ poll, onViewDetail, onViewComments, commentCount }: P
   const [error, setError] = useState<string | null>(null);
   const [showResults, setShowResults] = useState(false);
 
-  useEffect(() => {
-    if (user) {
-      checkUserVote();
-    }
-  }, [user, poll.id]);
-
-  const checkUserVote = async () => {
+  const checkUserVote = useCallback(async (abortSignal?: AbortSignal) => {
     if (!user) return;
 
     try {
       const voted = await pollService.hasUserVoted(poll.id, user.id);
+
+      if (abortSignal?.aborted) return;
       setHasVoted(voted);
 
       if (voted) {
         const pollResults = await pollService.getPollResults(poll.id, user.id);
+
+        if (abortSignal?.aborted) return;
+
         if (pollResults) {
           setResults(pollResults);
           setSelectedOption(pollResults.user_vote || null);
@@ -42,9 +41,22 @@ export function PollCard({ poll, onViewDetail, onViewComments, commentCount }: P
         }
       }
     } catch (err) {
-      console.error('Error checking user vote:', err);
+      if (!abortSignal?.aborted) {
+        console.error('Error checking user vote:', err);
+      }
     }
-  };
+  }, [user, poll.id]);
+
+  useEffect(() => {
+    if (!user) return;
+
+    const abortController = new AbortController();
+    checkUserVote(abortController.signal);
+
+    return () => {
+      abortController.abort();
+    };
+  }, [user, checkUserVote]);
 
   const handleVote = async (optionId: string) => {
     if (!user) {

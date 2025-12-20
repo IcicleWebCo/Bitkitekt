@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { FileCode, LogOut, User as UserIcon, ArrowLeft, Menu, X } from 'lucide-react';
 import { supabase } from './lib/supabase';
 import { postService } from './services/postService';
@@ -24,13 +24,14 @@ import { useAuth } from './contexts/AuthContext';
 import type { Post, PollWithOptions } from './types/database';
 import { TIMEOUTS } from './constants';
 import { useHeaderHeight } from './hooks/useHeaderHeight';
+import { useAuthFlow } from './hooks/useAuthFlow';
 
 type AuthMode = 'login' | 'register' | 'forgot-password';
-type ConfirmationState = { type: 'confirmed' | 'error'; message?: string } | null;
 type FeedItem = { type: 'post'; data: Post } | { type: 'poll'; data: PollWithOptions };
 
 function App() {
   const { user, profile, loading: authLoading, signOut, refreshProfile } = useAuth();
+  const { isPasswordRecovery, emailConfirmation, setEmailConfirmation, setIsPasswordRecovery } = useAuthFlow();
   const [posts, setPosts] = useState<Post[]>([]);
   const [polls, setPolls] = useState<PollWithOptions[]>([]);
   const [loading, setLoading] = useState(true);
@@ -38,8 +39,6 @@ function App() {
   const [selectedTopics, setSelectedTopics] = useState<Set<string>>(new Set());
   const [selectedDifficulties, setSelectedDifficulties] = useState<Set<string>>(new Set());
   const [authMode, setAuthMode] = useState<AuthMode>('login');
-  const [isPasswordRecovery, setIsPasswordRecovery] = useState(false);
-  const [emailConfirmation, setEmailConfirmation] = useState<ConfirmationState>(null);
   const [showProfile, setShowProfile] = useState(false);
   const [showAbout, setShowAbout] = useState(false);
   const [showStack, setShowStack] = useState(false);
@@ -56,29 +55,10 @@ function App() {
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const headerRef = useRef<HTMLElement>(null);
   const headerHeight = useHeaderHeight(headerRef, 80);
-  const authEventProcessedRef = useRef<Set<string>>(new Set());
-  const pendingConfirmationRef = useRef<{ type: string; userId?: string } | null>(null);
-
-  console.log('[App Render]', {
-    emailConfirmation,
-    isPasswordRecovery,
-    authLoading,
-    loading,
-    hasUser: !!user,
-    showAuthModal,
-    showProfile,
-    showAbout,
-    showStack,
-    hasSelectedPost: !!selectedPost,
-    hasSelectedPoll: !!selectedPoll
-  });
 
   useEffect(() => {
-    console.log('[Auth Flow] emailConfirmation state changed:', emailConfirmation);
-  }, [emailConfirmation]);
-
-  useEffect(() => {
-    loadPosts();
+    const abortController = new AbortController();
+    loadPosts(abortController.signal);
 
     const timeout = setTimeout(() => {
       if (loading) {
@@ -87,123 +67,30 @@ function App() {
       }
     }, 10000);
 
-    return () => clearTimeout(timeout);
-  }, []);
+    return () => {
+      abortController.abort();
+      clearTimeout(timeout);
+    };
+  }, [loadPosts]);
 
   useEffect(() => {
-    if (!authLoading) {
-      loadPosts();
-    }
-  }, [user?.id, authLoading]);
+    if (authLoading) return;
 
-  useEffect(() => {
-    console.log('[Auth Flow] useEffect initialized');
-    console.log('[Auth Flow] Current URL:', window.location.href);
-    console.log('[Auth Flow] Current hash:', window.location.hash);
-
-    const hashParams = new URLSearchParams(window.location.hash.substring(1));
-    const accessToken = hashParams.get('access_token');
-    const hashType = hashParams.get('type');
-
-    console.log('[Auth Flow] Hash params:', {
-      accessToken: accessToken ? `${accessToken.substring(0, 10)}...` : null,
-      type: hashType,
-      allParams: Object.fromEntries(hashParams.entries())
-    });
-
-    if (accessToken && !authEventProcessedRef.current.has(accessToken)) {
-      console.log('[Auth Flow] Processing access token - storing confirmation info and clearing hash');
-      authEventProcessedRef.current.add(accessToken);
-      pendingConfirmationRef.current = { type: hashType || 'unknown' };
-      console.log('[Auth Flow] Stored pending confirmation:', pendingConfirmationRef.current);
-      window.history.replaceState({}, document.title, window.location.pathname);
-    } else if (accessToken) {
-      console.log('[Auth Flow] Access token already processed');
-    }
-
-    console.log('[Auth Flow] Setting up onAuthStateChange listener');
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log('[Auth Flow] onAuthStateChange triggered:', {
-        event,
-        hasSession: !!session,
-        userId: session?.user?.id,
-        isPasswordRecovery,
-        currentEmailConfirmation: emailConfirmation
-      });
-
-      if (event === 'PASSWORD_RECOVERY') {
-        console.log('[Auth Flow] PASSWORD_RECOVERY event - setting isPasswordRecovery to true');
-        setIsPasswordRecovery(true);
-      } else if (event === 'SIGNED_IN' && session) {
-        console.log('[Auth Flow] SIGNED_IN event detected');
-
-        if (isPasswordRecovery) {
-          console.log('[Auth Flow] Was password recovery, clearing flag');
-          setIsPasswordRecovery(false);
-        }
-
-        const hashParams = new URLSearchParams(window.location.hash.substring(1));
-        const confirmationType = hashParams.get('type') || pendingConfirmationRef.current?.type;
-        const hasAccessToken = hashParams.has('access_token') || !!pendingConfirmationRef.current;
-
-        const userCreatedAt = new Date(session.user.created_at || '');
-        const now = new Date();
-        const accountAgeMinutes = (now.getTime() - userCreatedAt.getTime()) / 1000 / 60;
-        const isNewAccount = accountAgeMinutes < 5;
-
-        console.log('[Auth Flow] Checking confirmation type:', {
-          confirmationType,
-          hasAccessToken,
-          isNewAccount,
-          accountAgeMinutes: accountAgeMinutes.toFixed(2),
-          isEmailOrSignup: confirmationType === 'email' || confirmationType === 'signup',
-          eventKey: `${confirmationType}-${session.user.id}`,
-          alreadyProcessed: authEventProcessedRef.current.has(`signup-${session.user.id}`),
-          processedEvents: Array.from(authEventProcessedRef.current),
-          pendingConfirmation: pendingConfirmationRef.current
-        });
-
-        const shouldShowConfirmation = (
-          (confirmationType === 'email' || confirmationType === 'signup') ||
-          (hasAccessToken && isNewAccount)
-        ) && !authEventProcessedRef.current.has(`signup-${session.user.id}`);
-
-        if (shouldShowConfirmation) {
-          console.log('[Auth Flow] ✅ SETTING EMAIL CONFIRMATION');
-          authEventProcessedRef.current.add(`signup-${session.user.id}`);
-          pendingConfirmationRef.current = null;
-          setEmailConfirmation({ type: 'confirmed' });
-          window.history.replaceState({}, document.title, window.location.pathname);
-          console.log('[Auth Flow] Email confirmation state set, hash cleared');
-        } else {
-          console.log('[Auth Flow] ❌ NOT setting email confirmation - condition not met');
-        }
-      } else if (event === 'USER_UPDATED') {
-        console.log('[Auth Flow] USER_UPDATED event');
-        if (isPasswordRecovery) {
-          console.log('[Auth Flow] Was password recovery, clearing flag');
-          setIsPasswordRecovery(false);
-        }
-      } else if (event === 'SIGNED_OUT') {
-        console.log('[Auth Flow] SIGNED_OUT event - clearing all state');
-        setPreferencesLoaded(false);
-        setSelectedTopics(new Set());
-        setSelectedDifficulties(new Set());
-        authEventProcessedRef.current.clear();
-        pendingConfirmationRef.current = null;
-      } else {
-        console.log('[Auth Flow] Other event:', event);
-      }
-    });
-
-    console.log('[Auth Flow] Listener setup complete');
+    const abortController = new AbortController();
+    loadPosts(abortController.signal);
 
     return () => {
-      console.log('[Auth Flow] Cleaning up subscription');
-      subscription.unsubscribe();
+      abortController.abort();
     };
-  }, [isPasswordRecovery]);
+  }, [authLoading, loadPosts]);
+
+  useEffect(() => {
+    if (!user) {
+      setPreferencesLoaded(false);
+      setSelectedTopics(new Set());
+      setSelectedDifficulties(new Set());
+    }
+  }, [user]);
 
   useEffect(() => {
     if (profile && !preferencesLoaded) {
@@ -214,24 +101,6 @@ function App() {
       setPreferencesLoaded(true);
     }
   }, [profile, preferencesLoaded]);
-
-  useEffect(() => {
-    if (profile && preferencesLoaded) {
-      const topicPreferences = profile.filter_preferences || [];
-      const difficultyPreferences = profile.difficulty_preferences || [];
-      const currentTopicPreferences = Array.from(selectedTopics).sort().join(',');
-      const newTopicPreferences = topicPreferences.sort().join(',');
-      const currentDifficultyPreferences = Array.from(selectedDifficulties).sort().join(',');
-      const newDifficultyPreferences = difficultyPreferences.sort().join(',');
-
-      if (currentTopicPreferences !== newTopicPreferences) {
-        setSelectedTopics(new Set(topicPreferences));
-      }
-      if (currentDifficultyPreferences !== newDifficultyPreferences) {
-        setSelectedDifficulties(new Set(difficultyPreferences));
-      }
-    }
-  }, [profile?.filter_preferences, profile?.difficulty_preferences, preferencesLoaded]);
 
   useEffect(() => {
     if (!user || !preferencesLoaded) return;
@@ -262,12 +131,14 @@ function App() {
     };
   }, [selectedTopics, selectedDifficulties, user, preferencesLoaded, refreshProfile]);
 
-  const loadPosts = async () => {
+  const loadPosts = useCallback(async (abortSignal?: AbortSignal) => {
     try {
       const [postsData, pollsData] = await Promise.all([
         postService.getAllPosts(),
         pollService.getActivePolls(user?.id)
       ]);
+
+      if (abortSignal?.aborted) return;
 
       setPosts(postsData);
       setPolls(pollsData);
@@ -276,61 +147,77 @@ function App() {
 
       await Promise.all([
         ...postsData.map(async (post) => {
+          if (abortSignal?.aborted) return;
           try {
             const count = await commentService.getCommentCount(post.id);
-            counts.set(post.id, count);
+            if (!abortSignal?.aborted) {
+              counts.set(post.id, count);
+            }
           } catch (err) {
             console.error(`Failed to load comment count for post ${post.id}:`, err);
           }
         }),
         ...pollsData.map(async (poll) => {
+          if (abortSignal?.aborted) return;
           try {
             const count = await commentService.getPollCommentCount(poll.id);
-            counts.set(poll.id, count);
+            if (!abortSignal?.aborted) {
+              counts.set(poll.id, count);
+            }
           } catch (err) {
             console.error(`Failed to load comment count for poll ${poll.id}:`, err);
           }
         })
       ]);
 
-      setCommentCounts(counts);
+      if (!abortSignal?.aborted) {
+        setCommentCounts(counts);
+      }
 
       try {
         const topics = await topicService.getAllTopics();
+        if (abortSignal?.aborted) return;
+
         const gradientsMap = new Map<string, TopicGradient>();
         topics.forEach((topic) => {
           gradientsMap.set(topic.name, topicService.topicToGradient(topic));
         });
-        setTopicGradients(gradientsMap);
+
+        if (!abortSignal?.aborted) {
+          setTopicGradients(gradientsMap);
+        }
       } catch (err) {
         console.error('Failed to load topic gradients:', err);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load content');
+      if (!abortSignal?.aborted) {
+        setError(err instanceof Error ? err.message : 'Failed to load content');
+      }
     } finally {
-      setLoading(false);
+      if (!abortSignal?.aborted) {
+        setLoading(false);
+      }
     }
-  };
+  }, [user?.id]);
 
-  const uniqueSyntaxes = useMemo(() => {
+  const syntaxMetadata = useMemo(() => {
     const syntaxes = new Set<string>();
+    const counts = new Map<string, number>();
+
     posts.forEach(post => {
       if (post.syntax) {
         syntaxes.add(post.syntax);
-      }
-    });
-    return Array.from(syntaxes).sort();
-  }, [posts]);
-
-  const syntaxCounts = useMemo(() => {
-    const counts = new Map<string, number>();
-    posts.forEach(post => {
-      if (post.syntax) {
         counts.set(post.syntax, (counts.get(post.syntax) || 0) + 1);
       }
     });
-    return counts;
+
+    return {
+      uniqueSyntaxes: Array.from(syntaxes).sort(),
+      syntaxCounts: counts
+    };
   }, [posts]);
+
+  const { uniqueSyntaxes, syntaxCounts } = syntaxMetadata;
 
   const filteredPosts = useMemo(() => {
     let filtered = posts;
@@ -474,14 +361,12 @@ function App() {
   }
 
   if (emailConfirmation) {
-    console.log('[Auth Flow] Rendering EmailConfirmation component:', emailConfirmation);
     return (
       <div className="min-h-screen w-full bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4">
         <EmailConfirmation
           type={emailConfirmation.type}
           message={emailConfirmation.message}
           onContinue={() => {
-            console.log('[Auth Flow] EmailConfirmation onContinue clicked');
             setEmailConfirmation(null);
           }}
         />

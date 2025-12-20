@@ -44,8 +44,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    console.log('[AuthContext] Initializing auth state');
-
     const loadingTimeout = setTimeout(() => {
       if (loading) {
         console.error('[AuthContext] Auth loading timeout - forcing completion');
@@ -54,10 +52,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }, 10000);
 
     supabase.auth.getSession().then(({ data: { session } }) => {
-      console.log('[AuthContext] Initial session loaded:', {
-        hasSession: !!session,
-        userId: session?.user?.id
-      });
       initialSessionChecked.current = true;
       setUser(session?.user ?? null);
       if (session?.user) {
@@ -68,25 +62,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      console.log('[AuthContext] onAuthStateChange in context:', {
-        event: _event,
-        hasSession: !!session,
-        userId: session?.user?.id,
-        initialSessionChecked: initialSessionChecked.current
-      });
-
       if (!initialSessionChecked.current) {
-        console.log('[AuthContext] Skipping - initial session not checked yet');
         return;
       }
 
       (async () => {
         setUser(session?.user ?? null);
         if (session?.user) {
-          console.log('[AuthContext] Loading profile for user:', session.user.id);
           await loadProfile(session.user.id);
         } else {
-          console.log('[AuthContext] No session - clearing profile');
           setProfile(null);
           setLoading(false);
         }
@@ -94,7 +78,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
 
     return () => {
-      console.log('[AuthContext] Cleaning up');
       subscription.unsubscribe();
       clearTimeout(loadingTimeout);
     };

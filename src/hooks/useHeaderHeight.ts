@@ -33,7 +33,7 @@ export function useHeaderHeight(headerRef: RefObject<HTMLElement | null>, defaul
       }
       observer.disconnect();
     };
-  }, [headerRef]);
+  }, []);
 
   return height;
 }

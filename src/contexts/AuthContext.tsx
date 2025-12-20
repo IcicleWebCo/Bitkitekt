@@ -29,8 +29,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (error) throw error;
 
-      if (!data && retryCount < 3) {
-        await new Promise(resolve => setTimeout(resolve, 1000));
+      if (!data && retryCount < 2) {
+        await new Promise(resolve => setTimeout(resolve, 500));
         return loadProfile(userId, retryCount + 1);
       }
 
@@ -44,21 +44,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    const loadingTimeout = setTimeout(() => {
+    let loadingTimeout: NodeJS.Timeout | null = setTimeout(() => {
       if (loading) {
-        console.error('[AuthContext] Auth loading timeout - forcing completion');
+        console.warn('[AuthContext] Auth loading timeout - forcing completion');
         setLoading(false);
       }
     }, 10000);
 
     supabase.auth.getSession().then(({ data: { session } }) => {
       initialSessionChecked.current = true;
+      if (loadingTimeout) {
+        clearTimeout(loadingTimeout);
+        loadingTimeout = null;
+      }
       setUser(session?.user ?? null);
       if (session?.user) {
         loadProfile(session.user.id);
       } else {
         setLoading(false);
       }
+    }).catch((error) => {
+      console.error('[AuthContext] Failed to get session:', error);
+      if (loadingTimeout) {
+        clearTimeout(loadingTimeout);
+        loadingTimeout = null;
+      }
+      setLoading(false);
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -79,7 +90,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     return () => {
       subscription.unsubscribe();
-      clearTimeout(loadingTimeout);
+      if (loadingTimeout) {
+        clearTimeout(loadingTimeout);
+      }
     };
   }, [loadProfile]);
 

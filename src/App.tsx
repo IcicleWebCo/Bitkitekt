@@ -56,6 +56,75 @@ function App() {
   const headerRef = useRef<HTMLElement>(null);
   const headerHeight = useHeaderHeight(headerRef, 80);
 
+  const loadPosts = useCallback(async (abortSignal?: AbortSignal) => {
+    try {
+      const [postsData, pollsData] = await Promise.all([
+        postService.getAllPosts(),
+        pollService.getActivePolls(user?.id)
+      ]);
+
+      if (abortSignal?.aborted) return;
+
+      setPosts(postsData);
+      setPolls(pollsData);
+
+      const counts = new Map<string, number>();
+
+      await Promise.all([
+        ...postsData.map(async (post) => {
+          if (abortSignal?.aborted) return;
+          try {
+            const count = await commentService.getCommentCount(post.id);
+            if (!abortSignal?.aborted) {
+              counts.set(post.id, count);
+            }
+          } catch (err) {
+            console.error(`Failed to load comment count for post ${post.id}:`, err);
+          }
+        }),
+        ...pollsData.map(async (poll) => {
+          if (abortSignal?.aborted) return;
+          try {
+            const count = await commentService.getPollCommentCount(poll.id);
+            if (!abortSignal?.aborted) {
+              counts.set(poll.id, count);
+            }
+          } catch (err) {
+            console.error(`Failed to load comment count for poll ${poll.id}:`, err);
+          }
+        })
+      ]);
+
+      if (!abortSignal?.aborted) {
+        setCommentCounts(counts);
+      }
+
+      try {
+        const topics = await topicService.getAllTopics();
+        if (abortSignal?.aborted) return;
+
+        const gradientsMap = new Map<string, TopicGradient>();
+        topics.forEach((topic) => {
+          gradientsMap.set(topic.name, topicService.topicToGradient(topic));
+        });
+
+        if (!abortSignal?.aborted) {
+          setTopicGradients(gradientsMap);
+        }
+      } catch (err) {
+        console.error('Failed to load topic gradients:', err);
+      }
+    } catch (err) {
+      if (!abortSignal?.aborted) {
+        setError(err instanceof Error ? err.message : 'Failed to load content');
+      }
+    } finally {
+      if (!abortSignal?.aborted) {
+        setLoading(false);
+      }
+    }
+  }, [user?.id]);
+
   useEffect(() => {
     const abortController = new AbortController();
     loadPosts(abortController.signal);
@@ -130,75 +199,6 @@ function App() {
       }
     };
   }, [selectedTopics, selectedDifficulties, user, preferencesLoaded, refreshProfile]);
-
-  const loadPosts = useCallback(async (abortSignal?: AbortSignal) => {
-    try {
-      const [postsData, pollsData] = await Promise.all([
-        postService.getAllPosts(),
-        pollService.getActivePolls(user?.id)
-      ]);
-
-      if (abortSignal?.aborted) return;
-
-      setPosts(postsData);
-      setPolls(pollsData);
-
-      const counts = new Map<string, number>();
-
-      await Promise.all([
-        ...postsData.map(async (post) => {
-          if (abortSignal?.aborted) return;
-          try {
-            const count = await commentService.getCommentCount(post.id);
-            if (!abortSignal?.aborted) {
-              counts.set(post.id, count);
-            }
-          } catch (err) {
-            console.error(`Failed to load comment count for post ${post.id}:`, err);
-          }
-        }),
-        ...pollsData.map(async (poll) => {
-          if (abortSignal?.aborted) return;
-          try {
-            const count = await commentService.getPollCommentCount(poll.id);
-            if (!abortSignal?.aborted) {
-              counts.set(poll.id, count);
-            }
-          } catch (err) {
-            console.error(`Failed to load comment count for poll ${poll.id}:`, err);
-          }
-        })
-      ]);
-
-      if (!abortSignal?.aborted) {
-        setCommentCounts(counts);
-      }
-
-      try {
-        const topics = await topicService.getAllTopics();
-        if (abortSignal?.aborted) return;
-
-        const gradientsMap = new Map<string, TopicGradient>();
-        topics.forEach((topic) => {
-          gradientsMap.set(topic.name, topicService.topicToGradient(topic));
-        });
-
-        if (!abortSignal?.aborted) {
-          setTopicGradients(gradientsMap);
-        }
-      } catch (err) {
-        console.error('Failed to load topic gradients:', err);
-      }
-    } catch (err) {
-      if (!abortSignal?.aborted) {
-        setError(err instanceof Error ? err.message : 'Failed to load content');
-      }
-    } finally {
-      if (!abortSignal?.aborted) {
-        setLoading(false);
-      }
-    }
-  }, [user?.id]);
 
   const syntaxMetadata = useMemo(() => {
     const syntaxes = new Set<string>();

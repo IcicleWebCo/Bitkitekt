@@ -25,8 +25,6 @@ import type { Post, PollWithOptions } from './types/database';
 import { TIMEOUTS } from './constants';
 import { useHeaderHeight } from './hooks/useHeaderHeight';
 import { useAuthFlow } from './hooks/useAuthFlow';
-import { useInfiniteScroll } from './hooks/useInfiniteScroll';
-import { PAGINATION_CONFIG } from './config/pagination';
 
 type AuthMode = 'login' | 'register' | 'forgot-password';
 type FeedItem = { type: 'post'; data: Post } | { type: 'poll'; data: PollWithOptions };
@@ -53,61 +51,27 @@ function App() {
   const [savingPreferences, setSavingPreferences] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [topicGradients, setTopicGradients] = useState<Map<string, TopicGradient>>(new Map());
-  const [currentPage, setCurrentPage] = useState(0);
-  const [hasMore, setHasMore] = useState(true);
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const [allUniqueSyntaxes, setAllUniqueSyntaxes] = useState<string[]>([]);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const headerRef = useRef<HTMLElement>(null);
   const headerHeight = useHeaderHeight(headerRef, 80);
-  const currentPageRef = useRef(0);
 
-  useEffect(() => {
-    currentPageRef.current = currentPage;
-  }, [currentPage]);
-
-  const loadPosts = useCallback(async (abortSignal?: AbortSignal, resetPagination: boolean = false) => {
+  const loadPosts = useCallback(async (abortSignal?: AbortSignal) => {
     try {
-      if (resetPagination) {
-        setCurrentPage(0);
-        currentPageRef.current = 0;
-        setPosts([]);
-        setHasMore(true);
-        setCommentCounts(new Map());
-      }
-
-      const filters = {
-        syntaxes: selectedTopics.size > 0 ? Array.from(selectedTopics) : undefined,
-        difficulties: selectedDifficulties.size > 0 ? Array.from(selectedDifficulties) : undefined,
-      };
-
-      const pageToLoad = resetPagination ? 0 : currentPageRef.current;
-
-      const [paginatedResult, pollsData, allPostsForMetadata] = await Promise.all([
-        postService.getPaginatedPosts(pageToLoad, PAGINATION_CONFIG.POSTS_PER_PAGE, filters),
-        pollService.getActivePolls(user?.id),
-        postService.getAllPosts()
+      const [postsData, pollsData] = await Promise.all([
+        postService.getAllPosts(),
+        pollService.getActivePolls(user?.id)
       ]);
 
       if (abortSignal?.aborted) return;
 
-      const { data: newPosts, hasMore: moreAvailable } = paginatedResult;
-
-      setPosts(prev => resetPagination ? newPosts : [...prev, ...newPosts]);
+      setPosts(postsData);
       setPolls(pollsData);
-      setHasMore(moreAvailable);
-
-      const syntaxes = new Set<string>();
-      allPostsForMetadata.forEach(post => {
-        if (post.syntax) syntaxes.add(post.syntax);
-      });
-      setAllUniqueSyntaxes(Array.from(syntaxes).sort());
 
       const counts = new Map<string, number>();
 
       await Promise.all([
-        ...newPosts.map(async (post) => {
+        ...postsData.map(async (post) => {
           if (abortSignal?.aborted) return;
           try {
             const count = await commentService.getCommentCount(post.id);
@@ -132,10 +96,7 @@ function App() {
       ]);
 
       if (!abortSignal?.aborted) {
-        setCommentCounts(prev => {
-          if (resetPagination) return counts;
-          return new Map([...prev, ...counts]);
-        });
+        setCommentCounts(counts);
       }
 
       try {
@@ -162,72 +123,11 @@ function App() {
         setLoading(false);
       }
     }
-  }, [user?.id, selectedTopics, selectedDifficulties]);
-
-  const isLoadingMoreRef = useRef(false);
-  const hasMoreRef = useRef(true);
+  }, [user?.id]);
 
   useEffect(() => {
-    isLoadingMoreRef.current = isLoadingMore;
-  }, [isLoadingMore]);
-
-  useEffect(() => {
-    hasMoreRef.current = hasMore;
-  }, [hasMore]);
-
-  const loadMorePosts = useCallback(async () => {
-    if (isLoadingMoreRef.current || !hasMoreRef.current) return;
-
-    setIsLoadingMore(true);
-    try {
-      const filters = {
-        syntaxes: selectedTopics.size > 0 ? Array.from(selectedTopics) : undefined,
-        difficulties: selectedDifficulties.size > 0 ? Array.from(selectedDifficulties) : undefined,
-      };
-
-      const nextPage = currentPageRef.current + 1;
-      const paginatedResult = await postService.getPaginatedPosts(nextPage, PAGINATION_CONFIG.POSTS_PER_PAGE, filters);
-
-      const { data: newPosts, hasMore: moreAvailable } = paginatedResult;
-
-      setPosts(prev => [...prev, ...newPosts]);
-      setHasMore(moreAvailable);
-      setCurrentPage(nextPage);
-      currentPageRef.current = nextPage;
-
-      const counts = new Map<string, number>();
-      await Promise.all(
-        newPosts.map(async (post) => {
-          try {
-            const count = await commentService.getCommentCount(post.id);
-            counts.set(post.id, count);
-          } catch (err) {
-            console.error(`Failed to load comment count for post ${post.id}:`, err);
-          }
-        })
-      );
-
-      setCommentCounts(prev => new Map([...prev, ...counts]));
-    } catch (err) {
-      console.error('Failed to load more posts:', err);
-    } finally {
-      setIsLoadingMore(false);
-    }
-  }, [selectedTopics, selectedDifficulties]);
-
-  const infiniteScrollRef = useInfiniteScroll({
-    onLoadMore: loadMorePosts,
-    hasMore,
-    isLoading: isLoadingMore,
-  });
-
-  useEffect(() => {
-    if (authLoading) return;
-
     const abortController = new AbortController();
-    postService.refreshCache().then(() => {
-      loadPosts(abortController.signal, true);
-    });
+    loadPosts(abortController.signal);
 
     const timeout = setTimeout(() => {
       if (loading) {
@@ -240,19 +140,18 @@ function App() {
       abortController.abort();
       clearTimeout(timeout);
     };
-  }, [authLoading, loadPosts, loading]);
+  }, [loadPosts]);
 
   useEffect(() => {
-    if (!preferencesLoaded) return;
+    if (authLoading) return;
 
-    scrollToTop();
     const abortController = new AbortController();
-    loadPosts(abortController.signal, true);
+    loadPosts(abortController.signal);
 
     return () => {
       abortController.abort();
     };
-  }, [selectedTopics, selectedDifficulties, preferencesLoaded, loadPosts]);
+  }, [authLoading, loadPosts]);
 
   useEffect(() => {
     if (!user) {
@@ -301,19 +200,46 @@ function App() {
     };
   }, [selectedTopics, selectedDifficulties, user, preferencesLoaded, refreshProfile]);
 
-  const syntaxCounts = useMemo(() => {
+  const syntaxMetadata = useMemo(() => {
+    const syntaxes = new Set<string>();
     const counts = new Map<string, number>();
+
     posts.forEach(post => {
       if (post.syntax) {
+        syntaxes.add(post.syntax);
         counts.set(post.syntax, (counts.get(post.syntax) || 0) + 1);
       }
     });
-    return counts;
+
+    return {
+      uniqueSyntaxes: Array.from(syntaxes).sort(),
+      syntaxCounts: counts
+    };
   }, [posts]);
+
+  const { uniqueSyntaxes, syntaxCounts } = syntaxMetadata;
+
+  const filteredPosts = useMemo(() => {
+    let filtered = posts;
+
+    if (selectedTopics.size > 0) {
+      filtered = filtered.filter(post =>
+        post.syntax && selectedTopics.has(post.syntax)
+      );
+    }
+
+    if (selectedDifficulties.size > 0) {
+      filtered = filtered.filter(post =>
+        post.difficulty && selectedDifficulties.has(post.difficulty)
+      );
+    }
+
+    return filtered;
+  }, [posts, selectedTopics, selectedDifficulties]);
 
   const feedItems = useMemo(() => {
     const items: FeedItem[] = [];
-    const postsToUse = posts;
+    const postsToUse = filteredPosts;
     const pollsToUse = [...polls];
 
     if (postsToUse.length === 0 && pollsToUse.length === 0) {
@@ -353,7 +279,7 @@ function App() {
     }
 
     return items;
-  }, [posts, polls, profile?.poll_frequency]);
+  }, [filteredPosts, polls, profile?.poll_frequency]);
 
   useEffect(() => {
     const handlePopState = (event: PopStateEvent) => {
@@ -741,11 +667,9 @@ function App() {
                 return newMap;
               });
             }}
-            onVoteSubmitted={async () => {
+            onVoteSubmitted={() => {
               setSelectedPoll(null);
-              await postService.refreshCache();
-              const abortController = new AbortController();
-              loadPosts(abortController.signal, true);
+              loadPosts();
             }}
           />
         </div>
@@ -766,10 +690,10 @@ function App() {
 
   return (
     <>
-      {allUniqueSyntaxes.length > 0 && (
+      {uniqueSyntaxes.length > 0 && (
         <UnifiedHeader
           ref={headerRef}
-          topics={allUniqueSyntaxes}
+          topics={uniqueSyntaxes}
           selectedTopics={selectedTopics}
           onToggleTopic={toggleTopic}
           onClearAll={clearAllFilters}
@@ -810,58 +734,41 @@ function App() {
             </div>
           </div>
         ) : (
-          <>
-            {feedItems.map((item, index) => {
-              if (item.type === 'post') {
-                return (
-                  <PostCard
-                    key={`post-${item.data.id}`}
-                    post={item.data}
-                    onViewDetail={() => {
-                      setScrollToComments(false);
-                      setSelectedPost(item.data);
-                    }}
-                    onViewComments={() => {
-                      setScrollToComments(true);
-                      setSelectedPost(item.data);
-                    }}
-                    commentCount={commentCounts.get(item.data.id)}
-                  />
-                );
-              } else {
-                return (
-                  <PollCard
-                    key={`poll-${item.data.id}`}
-                    poll={item.data}
-                    onViewDetail={() => {
-                      setScrollToComments(false);
-                      setSelectedPoll(item.data);
-                    }}
-                    onViewComments={() => {
-                      setScrollToComments(true);
-                      setSelectedPoll(item.data);
-                    }}
-                    commentCount={commentCounts.get(item.data.id)}
-                  />
-                );
-              }
-            })}
-
-            {hasMore && (
-              <div ref={infiniteScrollRef} className="flex items-center justify-center py-12">
-                <div className="flex flex-col items-center gap-3">
-                  <div className="w-10 h-10 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin" />
-                  <p className="text-slate-400 text-sm">Loading more posts...</p>
-                </div>
-              </div>
-            )}
-
-            {!hasMore && posts.length > 0 && (
-              <div className="flex items-center justify-center py-12">
-                <p className="text-slate-500 text-sm">No more posts to load</p>
-              </div>
-            )}
-          </>
+          feedItems.map((item, index) => {
+            if (item.type === 'post') {
+              return (
+                <PostCard
+                  key={`post-${item.data.id}`}
+                  post={item.data}
+                  onViewDetail={() => {
+                    setScrollToComments(false);
+                    setSelectedPost(item.data);
+                  }}
+                  onViewComments={() => {
+                    setScrollToComments(true);
+                    setSelectedPost(item.data);
+                  }}
+                  commentCount={commentCounts.get(item.data.id)}
+                />
+              );
+            } else {
+              return (
+                <PollCard
+                  key={`poll-${item.data.id}`}
+                  poll={item.data}
+                  onViewDetail={() => {
+                    setScrollToComments(false);
+                    setSelectedPoll(item.data);
+                  }}
+                  onViewComments={() => {
+                    setScrollToComments(true);
+                    setSelectedPoll(item.data);
+                  }}
+                  commentCount={commentCounts.get(item.data.id)}
+                />
+              );
+            }
+          })
         )}
       </div>
     </>

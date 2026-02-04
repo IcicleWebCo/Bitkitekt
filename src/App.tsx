@@ -61,13 +61,20 @@ function App() {
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const headerRef = useRef<HTMLElement>(null);
   const headerHeight = useHeaderHeight(headerRef, 80);
+  const currentPageRef = useRef(0);
+
+  useEffect(() => {
+    currentPageRef.current = currentPage;
+  }, [currentPage]);
 
   const loadPosts = useCallback(async (abortSignal?: AbortSignal, resetPagination: boolean = false) => {
     try {
       if (resetPagination) {
         setCurrentPage(0);
+        currentPageRef.current = 0;
         setPosts([]);
         setHasMore(true);
+        setCommentCounts(new Map());
       }
 
       const filters = {
@@ -75,8 +82,10 @@ function App() {
         difficulties: selectedDifficulties.size > 0 ? Array.from(selectedDifficulties) : undefined,
       };
 
+      const pageToLoad = resetPagination ? 0 : currentPageRef.current;
+
       const [paginatedResult, pollsData, allPostsForMetadata] = await Promise.all([
-        postService.getPaginatedPosts(resetPagination ? 0 : currentPage, PAGINATION_CONFIG.POSTS_PER_PAGE, filters),
+        postService.getPaginatedPosts(pageToLoad, PAGINATION_CONFIG.POSTS_PER_PAGE, filters),
         pollService.getActivePolls(user?.id),
         postService.getAllPosts()
       ]);
@@ -123,7 +132,10 @@ function App() {
       ]);
 
       if (!abortSignal?.aborted) {
-        setCommentCounts(prev => new Map([...prev, ...counts]));
+        setCommentCounts(prev => {
+          if (resetPagination) return counts;
+          return new Map([...prev, ...counts]);
+        });
       }
 
       try {
@@ -150,7 +162,7 @@ function App() {
         setLoading(false);
       }
     }
-  }, [user?.id, currentPage, selectedTopics, selectedDifficulties]);
+  }, [user?.id, selectedTopics, selectedDifficulties]);
 
   const loadMorePosts = useCallback(async () => {
     if (isLoadingMore || !hasMore) return;
@@ -162,7 +174,7 @@ function App() {
         difficulties: selectedDifficulties.size > 0 ? Array.from(selectedDifficulties) : undefined,
       };
 
-      const nextPage = currentPage + 1;
+      const nextPage = currentPageRef.current + 1;
       const paginatedResult = await postService.getPaginatedPosts(nextPage, PAGINATION_CONFIG.POSTS_PER_PAGE, filters);
 
       const { data: newPosts, hasMore: moreAvailable } = paginatedResult;
@@ -170,6 +182,7 @@ function App() {
       setPosts(prev => [...prev, ...newPosts]);
       setHasMore(moreAvailable);
       setCurrentPage(nextPage);
+      currentPageRef.current = nextPage;
 
       const counts = new Map<string, number>();
       await Promise.all(
@@ -189,7 +202,7 @@ function App() {
     } finally {
       setIsLoadingMore(false);
     }
-  }, [isLoadingMore, hasMore, currentPage, selectedTopics, selectedDifficulties]);
+  }, [isLoadingMore, hasMore, selectedTopics, selectedDifficulties]);
 
   const infiniteScrollRef = useInfiniteScroll({
     onLoadMore: loadMorePosts,
@@ -198,8 +211,12 @@ function App() {
   });
 
   useEffect(() => {
+    if (authLoading) return;
+
     const abortController = new AbortController();
-    loadPosts(abortController.signal, true);
+    postService.refreshCache().then(() => {
+      loadPosts(abortController.signal, true);
+    });
 
     const timeout = setTimeout(() => {
       if (loading) {
@@ -212,20 +229,7 @@ function App() {
       abortController.abort();
       clearTimeout(timeout);
     };
-  }, []);
-
-  useEffect(() => {
-    if (authLoading) return;
-
-    const abortController = new AbortController();
-    postService.refreshCache().then(() => {
-      loadPosts(abortController.signal, true);
-    });
-
-    return () => {
-      abortController.abort();
-    };
-  }, [authLoading]);
+  }, [authLoading, loadPosts, loading]);
 
   useEffect(() => {
     if (!preferencesLoaded) return;
@@ -237,7 +241,7 @@ function App() {
     return () => {
       abortController.abort();
     };
-  }, [selectedTopics, selectedDifficulties]);
+  }, [selectedTopics, selectedDifficulties, preferencesLoaded, loadPosts]);
 
   useEffect(() => {
     if (!user) {

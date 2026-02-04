@@ -1,6 +1,17 @@
 import { supabase } from '../lib/supabase';
 import type { Post, PostInsert, PostUpdate } from '../types/database';
 
+interface PaginatedResult<T> {
+  data: T[];
+  totalCount: number;
+  hasMore: boolean;
+}
+
+// Cache for sorted posts to avoid re-fetching
+let cachedSortedPosts: Post[] | null = null;
+let cacheTimestamp: number | null = null;
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
 // Helper function to fetch posts with power up counts and sort them
 async function fetchAndSortPosts(query: any): Promise<Post[]> {
   const { data: posts, error: postsError } = await query;
@@ -36,6 +47,24 @@ async function fetchAndSortPosts(query: any): Promise<Post[]> {
   });
 }
 
+// Helper function to get cached sorted posts or fetch and cache them
+async function getCachedSortedPosts(forceRefresh: boolean = false): Promise<Post[]> {
+  const now = Date.now();
+  const isCacheValid = cachedSortedPosts && cacheTimestamp && (now - cacheTimestamp < CACHE_DURATION);
+
+  if (!forceRefresh && isCacheValid) {
+    return cachedSortedPosts!;
+  }
+
+  const query = supabase.from('post').select('*');
+  const sortedPosts = await fetchAndSortPosts(query);
+
+  cachedSortedPosts = sortedPosts;
+  cacheTimestamp = now;
+
+  return sortedPosts;
+}
+
 export const postService = {
   async getAllPosts(): Promise<Post[]> {
     const query = supabase
@@ -43,6 +72,53 @@ export const postService = {
       .select('*');
 
     return fetchAndSortPosts(query);
+  },
+
+  async getPaginatedPosts(
+    page: number,
+    pageSize: number,
+    filters?: {
+      syntaxes?: string[];
+      difficulties?: string[];
+    }
+  ): Promise<PaginatedResult<Post>> {
+    let allPosts = await getCachedSortedPosts();
+
+    // Apply filters if provided
+    if (filters) {
+      if (filters.syntaxes && filters.syntaxes.length > 0) {
+        allPosts = allPosts.filter(post =>
+          post.syntax && filters.syntaxes!.includes(post.syntax)
+        );
+      }
+
+      if (filters.difficulties && filters.difficulties.length > 0) {
+        allPosts = allPosts.filter(post =>
+          post.difficulty && filters.difficulties!.includes(post.difficulty)
+        );
+      }
+    }
+
+    const totalCount = allPosts.length;
+    const startIndex = page * pageSize;
+    const endIndex = startIndex + pageSize;
+    const paginatedPosts = allPosts.slice(startIndex, endIndex);
+    const hasMore = endIndex < totalCount;
+
+    return {
+      data: paginatedPosts,
+      totalCount,
+      hasMore,
+    };
+  },
+
+  async refreshCache(): Promise<void> {
+    await getCachedSortedPosts(true);
+  },
+
+  clearCache(): void {
+    cachedSortedPosts = null;
+    cacheTimestamp = null;
   },
 
   async getPostById(id: string): Promise<Post | null> {

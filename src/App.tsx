@@ -164,8 +164,19 @@ function App() {
     }
   }, [user?.id, selectedTopics, selectedDifficulties]);
 
+  const isLoadingMoreRef = useRef(false);
+  const hasMoreRef = useRef(true);
+
+  useEffect(() => {
+    isLoadingMoreRef.current = isLoadingMore;
+  }, [isLoadingMore]);
+
+  useEffect(() => {
+    hasMoreRef.current = hasMore;
+  }, [hasMore]);
+
   const loadMorePosts = useCallback(async () => {
-    if (isLoadingMore || !hasMore) return;
+    if (isLoadingMoreRef.current || !hasMoreRef.current) return;
 
     setIsLoadingMore(true);
     try {
@@ -202,7 +213,7 @@ function App() {
     } finally {
       setIsLoadingMore(false);
     }
-  }, [isLoadingMore, hasMore, selectedTopics, selectedDifficulties]);
+  }, [selectedTopics, selectedDifficulties]);
 
   const infiniteScrollRef = useInfiniteScroll({
     onLoadMore: loadMorePosts,
